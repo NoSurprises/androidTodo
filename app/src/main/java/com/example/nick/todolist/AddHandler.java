@@ -11,7 +11,7 @@ import android.widget.TextView;
  */
 
 public class AddHandler implements MenuItem.OnMenuItemClickListener {
-
+s
 
     LinearLayout activities;
     Context context;
