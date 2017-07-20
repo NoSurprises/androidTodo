@@ -1,11 +1,14 @@
 package com.example.nick.todolist;
 
 import android.content.Context;
+import android.icu.util.ChineseCalendar;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -14,6 +17,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.w3c.dom.Text;
+
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.Timer;
 
 public class MainMenu extends AppCompatActivity {
 
@@ -35,6 +43,8 @@ public class MainMenu extends AppCompatActivity {
         activities = (LinearLayout) findViewById(R.id.activities);
 
 
+
+
     }
 
     @Override
@@ -49,18 +59,29 @@ public class MainMenu extends AppCompatActivity {
             case R.id.add: {
 
                 View newElem = getLayoutInflater().inflate(R.layout.one_activity, activities);
-                LinearLayout ll
-                        = ((LinearLayout) newElem);
+                LinearLayout ll = ((LinearLayout) newElem);
+                Date d = new Date();
 
 
-                Toast.makeText(context, "Child count " + String.valueOf(ll.getChildCount()), Toast.LENGTH_SHORT).show();
+                ConstraintLayout newTodo = (ConstraintLayout)ll.getChildAt(ll.getChildCount() -1);
+
+
+                TextView todoText = ((TextView)newTodo.getChildAt(1));
+                todoText.setText("Новая задача..");
+
+
+
+
+                Toast.makeText(context,   " Child count " + String.valueOf(ll.getChildCount()), Toast.LENGTH_SHORT).show();
                 break;
             }
+
             case R.id.clear: {
                 activities.removeAllViews();
                 break;
 
             }
+
 
             case R.id.showAll: {
                 Toast.makeText(context, "not implemented yet", Toast.LENGTH_SHORT).show();
