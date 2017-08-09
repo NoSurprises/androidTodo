@@ -1,6 +1,7 @@
 package com.example.nick.todolist;
 
 import android.content.Context;
+import android.icu.util.Calendar;
 import android.icu.util.ChineseCalendar;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -11,6 +12,8 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.JavascriptInterface;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -20,14 +23,18 @@ import org.w3c.dom.Text;
 
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
+
 
 public class MainMenu extends AppCompatActivity {
 
     MenuItem add;
     MenuItem clear;
     MenuItem showAll;
+
+    ArrayList<TodoTask> todos;
 
     LinearLayout activities;
     Context context;
@@ -39,11 +46,10 @@ public class MainMenu extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
 
+        todos = new ArrayList<>();
+
         context = getApplicationContext();
         activities = (LinearLayout) findViewById(R.id.activities);
-
-
-
 
     }
 
@@ -58,25 +64,26 @@ public class MainMenu extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.add: {
 
+                TodoTask newTask = new TodoTask();
                 View newElem = getLayoutInflater().inflate(R.layout.one_activity, activities);
                 LinearLayout ll = ((LinearLayout) newElem);
-                Date d = new Date();
+                ConstraintLayout newTodo = (ConstraintLayout) ll.getChildAt(ll.getChildCount() - 1);
 
 
-                ConstraintLayout newTodo = (ConstraintLayout)ll.getChildAt(ll.getChildCount() -1);
+                EditText todoText = ((EditText) newTodo.getChildAt(1));
+
+                todoText.setText(newTask.getTimeCreated().toString());
+                todos.add(newTask);
 
 
-                TextView todoText = ((TextView)newTodo.getChildAt(1));
-                todoText.setText("Новая задача..");
-
-
-
-
-                Toast.makeText(context,   " Child count " + String.valueOf(ll.getChildCount()), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, " Child count " + String.valueOf(todos.size()),
+                        Toast.LENGTH_SHORT).show();
                 break;
             }
 
             case R.id.clear: {
+
+                todos = new ArrayList<>();
                 activities.removeAllViews();
                 break;
 
