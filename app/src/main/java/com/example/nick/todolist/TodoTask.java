@@ -34,6 +34,7 @@ public class TodoTask {
     private Date timeUpdated;
     private CustomListener listener = new CustomListener(this);
     private int completion = 0;
+    private TextView textTimeCreated;
 
 
     public TodoTask(ConstraintLayout todoObject, Context context) {
@@ -48,7 +49,42 @@ public class TodoTask {
         ((EditText) viewSwitcher.findViewById(R.id.editText)).setOnFocusChangeListener(listener);
         viewSwitcher.setOnClickListener(listener);
         viewSwitcher.setOnLongClickListener(listener);
-        SetText(getTimeCreated().toString());
+        SetText("New task..");
+        textTimeCreated = (TextView) todoObject.findViewById(R.id.timeCreated);
+        updateTimeCreated();
+
+    }
+
+    private void updateTimeCreated() {
+
+        textTimeCreated.setText(getPeriod(new Date(), timeCreated));
+    }
+
+    public String getPeriod(Date first, Date second) {
+        if (first.before(second)) {
+            Date tmp = first;
+            first = second;
+            second = tmp;
+        }
+        Log.d("daywont", "first time " + first.toString());
+        Log.d("daywont", "second time " + second.toString());
+        long timeBetween = first.getTime() - second.getTime();
+        // 1000 ms == 1 s
+        // 60s = 1 min
+        // 60 min = 1hour
+        //24 hour == 1day
+
+        Log.d("daywont", String.valueOf(timeBetween));
+        timeBetween /= 1000;
+        if (timeBetween < 60) {
+            return timeBetween + "s";
+        } else if (timeBetween < 2400) {
+            return timeBetween / 60 + "m";
+        } else if (timeBetween / 2400 < 24) {
+            return timeBetween / 60 / 60 + "h";
+        }
+        return timeBetween / 2400 / 60 + "d";
+
 
     }
 
@@ -70,6 +106,7 @@ public class TodoTask {
             imm.showSoftInput(((EditText) currentView), InputMethodManager.SHOW_IMPLICIT);
 
         }
+        updateTimeCreated();
     }
 
     void SetText(String text) {
