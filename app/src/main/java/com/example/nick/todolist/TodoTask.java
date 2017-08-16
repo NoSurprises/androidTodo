@@ -2,6 +2,7 @@ package com.example.nick.todolist;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.support.constraint.ConstraintLayout;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -28,6 +29,7 @@ public class TodoTask {
     private Calendar cal = Calendar.getInstance();
     private ViewSwitcher viewSwitcher;
 
+    int[] completionColor;
     private Context context;
     private ConstraintLayout todoObject;
     private Date timeCreated;
@@ -38,6 +40,12 @@ public class TodoTask {
 
 
     public TodoTask(ConstraintLayout todoObject, Context context) {
+
+        completionColor = new int[3];
+
+        completionColor[0] = Color.parseColor("#155015");
+        completionColor[1] = Color.parseColor("#15AA15");
+        completionColor[2] = Color.parseColor("#15FF15");
 
         this.context = context;
         timeCreated = cal.getTime();
@@ -120,8 +128,11 @@ public class TodoTask {
 
 
     void addCompletionPoint() {
-        if (++completion > 2) {
-            // task is finsished
+        if (completion < 3) {
+            ((TextView) viewSwitcher.findViewById(R.id.textView)).setTextColor(completionColor[completion]);
+            completion++;
+        } else {
+
             finishTask();
 
         }
@@ -145,6 +156,7 @@ class CustomListener implements View.OnClickListener, View.OnLongClickListener,
     public void onClick(View view) {
         Log.d("daywont", "clicked on " + view.toString());
         taskObject.addCompletionPoint();
+
 
     }
 
