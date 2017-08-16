@@ -1,10 +1,13 @@
 package com.example.nick.todolist;
 
+import android.app.Activity;
+import android.content.Context;
 import android.support.constraint.ConstraintLayout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,15 +28,17 @@ public class TodoTask {
     private Calendar cal = Calendar.getInstance();
     private ViewSwitcher viewSwitcher;
 
+    private Context context;
     private ConstraintLayout todoObject;
     private Date timeCreated;
     private Date timeUpdated;
-    CustomListener listener = new CustomListener(this);
-    int completion = 0;
+    private CustomListener listener = new CustomListener(this);
+    private int completion = 0;
 
 
-    public TodoTask(ConstraintLayout todoObject) {
+    public TodoTask(ConstraintLayout todoObject, Context context) {
 
+        this.context = context;
         timeCreated = cal.getTime();
         timeUpdated = timeCreated;
         this.todoObject = todoObject;
@@ -57,11 +62,17 @@ public class TodoTask {
 
     void SwitchEditingText() {
         viewSwitcher.showNext();
+        TextView currentView = (TextView) viewSwitcher.getCurrentView();
+        if (currentView instanceof EditText) {
+            Log.d("daywont", "began editing");
+            ((EditText) currentView).requestFocus();
+            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(((EditText) currentView), InputMethodManager.SHOW_IMPLICIT);
+
+        }
     }
 
     void SetText(String text) {
-        Log.d("daywont", "set text to " + text);
-        Log.d("daywont", "current view " + viewSwitcher.getCurrentView().toString());
         ((TextView) viewSwitcher.getCurrentView()).setText(text);
         ((TextView) viewSwitcher.getNextView()).setText(text);
     }

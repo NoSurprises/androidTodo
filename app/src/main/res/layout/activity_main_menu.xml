@@ -8,6 +8,7 @@
 
 
     <ScrollView
+        android:id="@+id/scrollArea"
         android:layout_width="363dp"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
@@ -19,13 +20,17 @@
         android:layout_marginRight="8dp"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp">
+        android:layout_marginEnd="8dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        >
 
         <LinearLayout
             android:id="@+id/activities"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="vertical"
+            >
 
         </LinearLayout>
     </ScrollView>

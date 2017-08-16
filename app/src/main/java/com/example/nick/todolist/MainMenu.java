@@ -8,6 +8,7 @@ import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import android.text.StaticLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,13 +51,17 @@ public class MainMenu extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
 
-
-
-
         todos = new ArrayList<>();
 
         context = getApplicationContext();
         activities = (LinearLayout) findViewById(R.id.activities);
+        findViewById(R.id.scrollArea).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                activities.requestFocus();
+                Log.d("daywont", "clicking on white area!");
+            }
+        });
 
     }
 
@@ -76,7 +81,8 @@ public class MainMenu extends AppCompatActivity {
 
                 //creating the object of the new task
                 TodoTask newTask = new TodoTask(
-                        (ConstraintLayout) activities.getChildAt(activities.getChildCount() - 1));
+                        (ConstraintLayout) activities.getChildAt(activities.getChildCount() - 1),
+                        context);
                 todos.add(newTask);
                 break;
             }
@@ -99,4 +105,5 @@ public class MainMenu extends AppCompatActivity {
         }
         return true;
     }
+
 }
