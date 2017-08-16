@@ -3,15 +3,18 @@ package com.example.nick.todolist;
 import android.content.Context;
 import android.icu.util.Calendar;
 import android.icu.util.ChineseCalendar;
+import android.os.Debug;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.JavascriptInterface;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -30,6 +33,7 @@ import java.util.Timer;
 
 public class MainMenu extends AppCompatActivity {
 
+    private static final String TAG = MainMenu.class.getSimpleName();
     MenuItem add;
     MenuItem clear;
     MenuItem showAll;
@@ -45,6 +49,9 @@ public class MainMenu extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
+
+
+
 
         todos = new ArrayList<>();
 
@@ -64,20 +71,13 @@ public class MainMenu extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.add: {
 
-                TodoTask newTask = new TodoTask();
-                View newElem = getLayoutInflater().inflate(R.layout.one_activity, activities);
-                LinearLayout ll = ((LinearLayout) newElem);
-                ConstraintLayout newTodo = (ConstraintLayout) ll.getChildAt(ll.getChildCount() - 1);
+                //inflating the list with the new taskTodo
+                getLayoutInflater().inflate(R.layout.one_activity, activities);
 
-
-                EditText todoText = ((EditText) newTodo.getChildAt(1));
-
-                todoText.setText(newTask.getTimeCreated().toString());
+                //creating the object of the new task
+                TodoTask newTask = new TodoTask(
+                        (ConstraintLayout) activities.getChildAt(activities.getChildCount() - 1));
                 todos.add(newTask);
-
-
-                Toast.makeText(context, " Child count " + String.valueOf(todos.size()),
-                        Toast.LENGTH_SHORT).show();
                 break;
             }
 
