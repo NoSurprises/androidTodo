@@ -3,12 +3,14 @@ package com.example.nick.todolist;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.support.constraint.ConstraintLayout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,9 +36,10 @@ public class TodoTask {
     private ConstraintLayout todoObject;
     private Date timeCreated;
     private Date timeUpdated;
-    private CustomListener listener = new CustomListener(this);
     private int completion = 0;
     private TextView textTimeCreated;
+    private TextView textOfTask;
+    private boolean finished;
 
 
     public TodoTask(ConstraintLayout todoObject, Context context) {
@@ -54,13 +57,58 @@ public class TodoTask {
 
         viewSwitcher = ((ViewSwitcher) todoObject.findViewById(R.id.switcher));
         viewSwitcher.showNext();
-        ((EditText) viewSwitcher.findViewById(R.id.editText)).setOnFocusChangeListener(listener);
-        viewSwitcher.setOnClickListener(listener);
-        viewSwitcher.setOnLongClickListener(listener);
+        ((EditText) viewSwitcher.findViewById(R.id.editText)).setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean isFocused) {
+
+                if (!isFocused) {
+                    SetText(((EditText) view).getText().toString());
+                    SwitchEditingText();
+                }
+            }
+        });
+        viewSwitcher.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                addCompletionPoint();
+            }
+        });
+
+
+        viewSwitcher.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                SwitchEditingText();
+                return true;
+            }
+        });
+
+        todoObject.findViewById(R.id.checkBox).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!isFinished())
+                {
+                    finishTask();
+                }
+                else {
+                    resetTask();
+                }
+            }
+        });
+
         SetText("New task..");
         textTimeCreated = (TextView) todoObject.findViewById(R.id.timeCreated);
         updateTimeCreated();
 
+        textOfTask = (TextView) viewSwitcher.findViewById(R.id.textView);
+
+    }
+
+    private void resetTask() {
+        ((CheckBox) todoObject.findViewById(R.id.checkBox)).setChecked(false);
+        textOfTask.setPaintFlags(textOfTask.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+
+        finished = false;
     }
 
     private void updateTimeCreated() {
@@ -74,15 +122,12 @@ public class TodoTask {
             first = second;
             second = tmp;
         }
-        Log.d("daywont", "first time " + first.toString());
-        Log.d("daywont", "second time " + second.toString());
         long timeBetween = first.getTime() - second.getTime();
         // 1000 ms == 1 s
         // 60s = 1 min
         // 60 min = 1hour
         //24 hour == 1day
 
-        Log.d("daywont", String.valueOf(timeBetween));
         timeBetween /= 1000;
         if (timeBetween < 60) {
             return timeBetween + "s";
@@ -108,7 +153,6 @@ public class TodoTask {
         viewSwitcher.showNext();
         TextView currentView = (TextView) viewSwitcher.getCurrentView();
         if (currentView instanceof EditText) {
-            Log.d("daywont", "began editing");
             ((EditText) currentView).requestFocus();
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.showSoftInput(((EditText) currentView), InputMethodManager.SHOW_IMPLICIT);
@@ -123,59 +167,39 @@ public class TodoTask {
     }
 
     String getText() {
-        return ((TextView) viewSwitcher.getCurrentView()).getText().toString();
+        return textOfTask.getText().toString();
     }
-
 
     void addCompletionPoint() {
         if (completion < 3) {
-            ((TextView) viewSwitcher.findViewById(R.id.textView)).setTextColor(completionColor[completion]);
+
+            textOfTask.setTextColor(completionColor[completion]);
             completion++;
+
         } else {
-
             finishTask();
-
         }
     }
 
     void finishTask() {
-        Log.d("daywont", "task " + getText() + " is finished");
+        ((CheckBox) todoObject.findViewById(R.id.checkBox)).setChecked(true);
+        textOfTask.setPaintFlags(textOfTask.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+        finished = true;
+    }
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public void hide() {
+        todoObject.setVisibility(View.GONE);
+
+    }
+
+    public void show() {
+
+        todoObject.setVisibility(View.VISIBLE);
     }
 }
 
-class CustomListener implements View.OnClickListener, View.OnLongClickListener,
-        View.OnFocusChangeListener {
-    TodoTask taskObject;
 
-    CustomListener(TodoTask task) {
-
-        taskObject = task;
-    }
-
-    @Override
-    public void onClick(View view) {
-        Log.d("daywont", "clicked on " + view.toString());
-        taskObject.addCompletionPoint();
-
-
-    }
-
-    @Override
-    public boolean onLongClick(View view) {
-
-        Log.d("daywont", "long clicked on " + view.toString());
-
-        taskObject.SwitchEditingText();
-        return true;
-    }
-
-    @Override
-    public void onFocusChange(View view, boolean b) {
-        Log.d("daywont", "focus changed to " + b);
-
-        if (!b) {
-            taskObject.SetText(taskObject.getText());
-            taskObject.SwitchEditingText();
-        }
-    }
-}

@@ -15,6 +15,7 @@
     <item
         android:id="@+id/showAll"
         android:checkable="true"
+        android:checked="true"
         android:title="Show all" />
 
 </menu>

@@ -39,6 +39,8 @@ public class MainMenu extends AppCompatActivity {
     MenuItem clear;
     MenuItem showAll;
 
+    Menu optionsMenu;
+
     ArrayList<TodoTask> todos;
 
     LinearLayout activities;
@@ -63,11 +65,14 @@ public class MainMenu extends AppCompatActivity {
             }
         });
 
+
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
+        optionsMenu = menu;
+        showAll = menu.findItem(R.id.showAll);
         return true;
     }
 
@@ -97,7 +102,22 @@ public class MainMenu extends AppCompatActivity {
 
 
             case R.id.showAll: {
-                Toast.makeText(context, "not implemented yet", Toast.LENGTH_SHORT).show();
+
+                showAll.setChecked(!showAll.isChecked());
+                if (!showAll.isChecked()) {
+                    for (TodoTask todo : todos) {
+                        if (todo.isFinished()) {
+                            todo.hide();
+                        }
+
+                    }
+                } else {
+                    for (TodoTask todo : todos) {
+                        todo.show();
+
+                    }
+                }
+
                 break;
 
             }
