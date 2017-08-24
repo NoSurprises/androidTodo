@@ -26,12 +26,12 @@ import java.util.IdentityHashMap;
  * Created by Nick on 8/9/2017.
  */
 
-public class TodoTask {
+class TodoTask {
 
-    private Calendar cal = Calendar.getInstance();
+    private Calendar cal;
     private ViewSwitcher viewSwitcher;
 
-    int[] completionColor;
+    private int[] completionColor;
     private Context context;
     private ConstraintLayout todoObject;
     private Date timeCreated;
@@ -42,7 +42,7 @@ public class TodoTask {
     private boolean finished;
 
 
-    public TodoTask(ConstraintLayout todoObject, Context context) {
+    TodoTask(ConstraintLayout todoObject, Context context) {
 
         completionColor = new int[3];
 
@@ -86,16 +86,14 @@ public class TodoTask {
         todoObject.findViewById(R.id.checkBox).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!isFinished())
-                {
+                if (!isFinished()) {
                     finishTask();
-                }
-                else {
+                } else {
                     resetTask();
                 }
             }
         });
-
+        cal = Calendar.getInstance();
         SetText("New task..");
         textTimeCreated = (TextView) todoObject.findViewById(R.id.timeCreated);
         updateTimeCreated();
@@ -116,7 +114,7 @@ public class TodoTask {
         textTimeCreated.setText(getPeriod(new Date(), timeCreated));
     }
 
-    public String getPeriod(Date first, Date second) {
+    private String getPeriod(Date first, Date second) {
         if (first.before(second)) {
             Date tmp = first;
             first = second;
@@ -149,7 +147,7 @@ public class TodoTask {
         timeUpdated = date;
     }
 
-    void SwitchEditingText() {
+    private void SwitchEditingText() {
         viewSwitcher.showNext();
         TextView currentView = (TextView) viewSwitcher.getCurrentView();
         if (currentView instanceof EditText) {
@@ -161,7 +159,7 @@ public class TodoTask {
         updateTimeCreated();
     }
 
-    void SetText(String text) {
+    private void SetText(String text) {
         ((TextView) viewSwitcher.getCurrentView()).setText(text);
         ((TextView) viewSwitcher.getNextView()).setText(text);
     }
@@ -170,7 +168,7 @@ public class TodoTask {
         return textOfTask.getText().toString();
     }
 
-    void addCompletionPoint() {
+    private void addCompletionPoint() {
         if (completion < 3) {
 
             textOfTask.setTextColor(completionColor[completion]);
@@ -181,22 +179,22 @@ public class TodoTask {
         }
     }
 
-    void finishTask() {
+    private void finishTask() {
         ((CheckBox) todoObject.findViewById(R.id.checkBox)).setChecked(true);
         textOfTask.setPaintFlags(textOfTask.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
         finished = true;
     }
 
-    public boolean isFinished() {
+    boolean isFinished() {
         return finished;
     }
 
-    public void hide() {
+    void hide() {
         todoObject.setVisibility(View.GONE);
 
     }
 
-    public void show() {
+    void show() {
 
         todoObject.setVisibility(View.VISIBLE);
     }
