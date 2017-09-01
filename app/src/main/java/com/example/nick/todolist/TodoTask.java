@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.constraint.ConstraintLayout;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -29,7 +30,7 @@ import java.util.IdentityHashMap;
 class TodoTask {
 
     private Calendar cal;
-    private ViewSwitcher viewSwitcher;
+    ViewSwitcher viewSwitcher;
 
     private int[] completionColor;
     private Context context;
@@ -50,6 +51,7 @@ class TodoTask {
         completionColor[1] = Color.parseColor("#15AA15");
         completionColor[2] = Color.parseColor("#15FF15");
 
+        cal = Calendar.getInstance();
         this.context = context;
         timeCreated = cal.getTime();
         timeUpdated = timeCreated;
@@ -75,10 +77,23 @@ class TodoTask {
         });
 
 
+        viewSwitcher.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+            @Override
+
+            public void onCreateContextMenu(ContextMenu contextMenu, View view, ContextMenu.ContextMenuInfo contextMenuInfo) {
+                contextMenu.add("Edit");
+                contextMenu.add("Remove");
+            }
+        });
+
+
+
         viewSwitcher.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                SwitchEditingText();
+                //SwitchEditingText();
+                // show context menu
+                view.showContextMenu();
                 return true;
             }
         });

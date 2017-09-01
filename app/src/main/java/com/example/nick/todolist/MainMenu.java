@@ -88,6 +88,8 @@ public class MainMenu extends AppCompatActivity {
                 TodoTask newTask = new TodoTask(
                         (ConstraintLayout) activities.getChildAt(activities.getChildCount() - 1),
                         context);
+
+                // registerForContextMenu(newTask.viewSwitcher);
                 todos.add(newTask);
                 break;
             }
@@ -126,4 +128,18 @@ public class MainMenu extends AppCompatActivity {
         return true;
     }
 
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case 0:
+                Toast.makeText(this, "Adding new item", Toast.LENGTH_SHORT).show();
+                break;
+            case 1:
+                Toast.makeText(context, "Remove item but which", Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                Toast.makeText(context, "Something strange chosen", Toast.LENGTH_SHORT).show();
+        }
+        return super.onContextItemSelected(item);
+    }
 }
