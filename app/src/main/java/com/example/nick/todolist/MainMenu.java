@@ -1,42 +1,22 @@
 package com.example.nick.todolist;
 
-import android.content.Context;
-import android.icu.util.Calendar;
-import android.icu.util.ChineseCalendar;
-import android.os.Debug;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-
-import android.text.StaticLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
-import android.webkit.JavascriptInterface;
-import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Timer;
 
 
-public class MainMenu extends AppCompatActivity {
+public class MainMenu extends AppCompatActivity implements RemoveTask {
 
-    private static final String TAG = MainMenu.class.getSimpleName();
-    MenuItem add;
-    MenuItem clear;
+
+    private static final String TAG = "daywint";
     MenuItem showAll;
 
     Menu optionsMenu;
@@ -44,9 +24,6 @@ public class MainMenu extends AppCompatActivity {
     ArrayList<TodoTask> todos;
 
     LinearLayout activities;
-    Context context;
-
-    int index = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,21 +32,15 @@ public class MainMenu extends AppCompatActivity {
 
         todos = new ArrayList<>();
 
-        context = getApplicationContext();
-        activities = (LinearLayout) findViewById(R.id.activities);
-        findViewById(R.id.scrollArea).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                activities.requestFocus();
-                Log.d("daywont", "clicking on white area!");
-            }
-        });
 
+        activities = (LinearLayout) findViewById(R.id.activities);
 
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+
         getMenuInflater().inflate(R.menu.menu, menu);
         optionsMenu = menu;
         showAll = menu.findItem(R.id.showAll);
@@ -78,6 +49,8 @@ public class MainMenu extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        super.onOptionsItemSelected(item);
+
         switch (item.getItemId()) {
             case R.id.add: {
 
@@ -87,9 +60,9 @@ public class MainMenu extends AppCompatActivity {
                 //creating the object of the new task
                 TodoTask newTask = new TodoTask(
                         (ConstraintLayout) activities.getChildAt(activities.getChildCount() - 1),
-                        context);
+                        this);
 
-                // registerForContextMenu(newTask.viewSwitcher);
+                newTask.setOnRemoveTask(this);
                 todos.add(newTask);
                 break;
             }
@@ -123,23 +96,57 @@ public class MainMenu extends AppCompatActivity {
                 break;
 
             }
+            case R.id.removeFinished:
+
+                try {
+                    int count = 0;
+                    for (TodoTask todo : todos) {
+                        if (todo.isFinished()) {
+                            count++;
+                        }
+                    }
+                    TodoTask[] toRemove = new TodoTask[count];
+                    count = 0;
+                    for (TodoTask todo : todos) {
+
+                        if (todo.isFinished()) {
+                            toRemove[count++] = todo;
+                        }
+                    }
+                    for (TodoTask task : toRemove) {
+                        task.removeTask();
+                    }
+                    break;
+                }
+                catch (Exception e) {
+                    Log.d(TAG, " " + e);
+                }
 
         }
         return true;
     }
 
+
     @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case 0:
-                Toast.makeText(this, "Adding new item", Toast.LENGTH_SHORT).show();
-                break;
-            case 1:
-                Toast.makeText(context, "Remove item but which", Toast.LENGTH_SHORT).show();
-                break;
-            default:
-                Toast.makeText(context, "Something strange chosen", Toast.LENGTH_SHORT).show();
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        Log.d(TAG, "activity finished");
+        if (data == null) {
+            return;
         }
-        return super.onContextItemSelected(item);
+
+        // TODO! receiving null data from EditTask activity. Trying to edit a new task and record the new name of it;
+        Log.d(TAG, "received " + data.getStringExtra("name"));
+    }
+
+    @Override
+    public void removeTask(TodoTask task) {
+        todos.remove(task);
+
+    }
+
+    boolean showFinishedTasks() {
+        return !showAll.isChecked();
     }
 }

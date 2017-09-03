@@ -1,27 +1,23 @@
 package com.example.nick.todolist;
 
-import android.app.Activity;
-import android.content.Context;
-import android.graphics.Color;
+
+import android.app.DownloadManager;
+import android.content.Intent;
 import android.graphics.Paint;
+import android.preference.PreferenceManager;
 import android.support.constraint.ConstraintLayout;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.PopupMenu;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.KeyEvent;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
-import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ViewSwitcher;
 
-import org.w3c.dom.Text;
-
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.IdentityHashMap;
 
 /**
  * Created by Nick on 8/9/2017.
@@ -29,47 +25,43 @@ import java.util.IdentityHashMap;
 
 class TodoTask {
 
-    private Calendar cal;
-    ViewSwitcher viewSwitcher;
-
-    private int[] completionColor;
-    private Context context;
+    private ArrayList<RemoveTask> removeListeners;
+    private static ArrayList<TodoTask> allTasks;
+    private AppCompatActivity activity;
     private ConstraintLayout todoObject;
     private Date timeCreated;
-    private Date timeUpdated;
+
+    private final String TAG = "daywint";
     private int completion = 0;
     private TextView textTimeCreated;
     private TextView textOfTask;
     private boolean finished;
 
+    static {
+        allTasks = new ArrayList<>();
+    }
 
-    TodoTask(ConstraintLayout todoObject, Context context) {
-
-        completionColor = new int[3];
-
-        completionColor[0] = Color.parseColor("#155015");
-        completionColor[1] = Color.parseColor("#15AA15");
-        completionColor[2] = Color.parseColor("#15FF15");
-
-        cal = Calendar.getInstance();
-        this.context = context;
-        timeCreated = cal.getTime();
-        timeUpdated = timeCreated;
+    TodoTask(ConstraintLayout todoObject, final AppCompatActivity appCompatActivity) {
         this.todoObject = todoObject;
+        this.activity = appCompatActivity;
 
-        viewSwitcher = ((ViewSwitcher) todoObject.findViewById(R.id.switcher));
-        viewSwitcher.showNext();
-        ((EditText) viewSwitcher.findViewById(R.id.editText)).setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean isFocused) {
 
-                if (!isFocused) {
-                    SetText(((EditText) view).getText().toString());
-                    SwitchEditingText();
-                }
-            }
-        });
-        viewSwitcher.setOnClickListener(new View.OnClickListener() {
+        allTasks.add(this);
+        textOfTask = todoObject.findViewById(R.id.textView);
+
+        removeListeners = new ArrayList<>();
+
+        Calendar cal = Calendar.getInstance();
+        timeCreated = cal.getTime();
+        // timeUpdated = timeCreated;
+        
+        setText("New task..");
+        textTimeCreated = todoObject.findViewById(R.id.timeCreated);
+        updateTimeCreated();
+
+
+
+        textOfTask.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 addCompletionPoint();
@@ -77,23 +69,49 @@ class TodoTask {
         });
 
 
-        viewSwitcher.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+        textOfTask.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
+            public boolean onLongClick(final View view) {
+                // create popupMenu
 
-            public void onCreateContextMenu(ContextMenu contextMenu, View view, ContextMenu.ContextMenuInfo contextMenuInfo) {
-                contextMenu.add("Edit");
-                contextMenu.add("Remove");
-            }
-        });
+                PopupMenu popupMenu = new PopupMenu(activity, view);
+                popupMenu.inflate(R.menu.item_context_menu);
 
+                final TodoTask taskObject = findTaskByText(((TextView) view));
+                if (taskObject == null){
+                    return false;
+                }
+                popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.edit:
+                                Log.d(TAG, "editing item " + taskObject.textOfTask.getText());
+                                switchToEditingActivity();
+                                break;
+                            case R.id.remove:
+                                Log.d(TAG, "removing item " + taskObject);
+                                // removing task
+                                taskObject.removeTask();
 
+                                break;
 
-        viewSwitcher.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                //SwitchEditingText();
-                // show context menu
-                view.showContextMenu();
+                            default:
+                                return false;
+                        }
+                        return true;
+                    }
+                });
+
+                popupMenu.setOnDismissListener(new PopupMenu.OnDismissListener() {
+                    @Override
+                    public void onDismiss(PopupMenu menu) {
+                        updateTimeCreated();
+
+                    }
+                });
+                popupMenu.show();
+
                 return true;
             }
         });
@@ -108,13 +126,44 @@ class TodoTask {
                 }
             }
         });
-        cal = Calendar.getInstance();
-        SetText("New task..");
-        textTimeCreated = (TextView) todoObject.findViewById(R.id.timeCreated);
-        updateTimeCreated();
 
-        textOfTask = (TextView) viewSwitcher.findViewById(R.id.textView);
 
+        switchToEditingActivity();
+
+    }
+
+    private void switchToEditingActivity() {
+        Intent intent = new Intent(activity, EditTask.class);
+        activity.startActivityForResult(intent, 1);
+
+
+    }
+
+    void setOnRemoveTask(RemoveTask listener) {
+        removeListeners.add(listener);
+    }
+
+    void removeTask() {
+
+        allTasks.remove(this);
+        ((LinearLayout) (activity.findViewById(R.id.activities))).removeView(((View) textOfTask.getParent()));
+        for (RemoveTask removeListener : removeListeners) {
+            removeListener.removeTask(this);
+        }
+
+    }
+
+    private TodoTask findTaskByText(TextView view) {
+        int index = 0;
+        for (TodoTask createdTask : allTasks) {
+            if (createdTask.textOfTask.equals(view)) {
+                Log.d(TAG, "task found on " + index + "place out of " + allTasks.size());
+                return createdTask;
+
+            }
+            index++;
+        }
+        return null;
     }
 
     private void resetTask() {
@@ -126,10 +175,10 @@ class TodoTask {
 
     private void updateTimeCreated() {
 
-        textTimeCreated.setText(getPeriod(new Date(), timeCreated));
+        textTimeCreated.setText(getTimePeriod(new Date(), timeCreated));
     }
 
-    private String getPeriod(Date first, Date second) {
+    private String getTimePeriod(Date first, Date second) {
         if (first.before(second)) {
             Date tmp = first;
             first = second;
@@ -154,39 +203,13 @@ class TodoTask {
 
     }
 
-    public Date getTimeCreated() {
-        return timeCreated;
-    }
 
-    public void setTimeUpdated(Date date) {
-        timeUpdated = date;
-    }
-
-    private void SwitchEditingText() {
-        viewSwitcher.showNext();
-        TextView currentView = (TextView) viewSwitcher.getCurrentView();
-        if (currentView instanceof EditText) {
-            ((EditText) currentView).requestFocus();
-            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(((EditText) currentView), InputMethodManager.SHOW_IMPLICIT);
-
-        }
-        updateTimeCreated();
-    }
-
-    private void SetText(String text) {
-        ((TextView) viewSwitcher.getCurrentView()).setText(text);
-        ((TextView) viewSwitcher.getNextView()).setText(text);
-    }
-
-    String getText() {
-        return textOfTask.getText().toString();
+    private void setText(String text) {
+        textOfTask.setText(text);
     }
 
     private void addCompletionPoint() {
         if (completion < 3) {
-
-            textOfTask.setTextColor(completionColor[completion]);
             completion++;
 
         } else {
@@ -198,6 +221,11 @@ class TodoTask {
         ((CheckBox) todoObject.findViewById(R.id.checkBox)).setChecked(true);
         textOfTask.setPaintFlags(textOfTask.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
         finished = true;
+
+        if (((MainMenu) activity).showFinishedTasks()) {
+            hide();
+        }
+
     }
 
     boolean isFinished() {
@@ -205,6 +233,7 @@ class TodoTask {
     }
 
     void hide() {
+        // TODO add animation
         todoObject.setVisibility(View.GONE);
 
     }
@@ -216,3 +245,6 @@ class TodoTask {
 }
 
 
+interface RemoveTask {
+    void removeTask(TodoTask task);
+}
