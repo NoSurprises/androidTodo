@@ -10,7 +10,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.LinearLayout;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 
 public class MainMenu extends AppCompatActivity implements RemoveTask {
@@ -126,6 +130,15 @@ public class MainMenu extends AppCompatActivity implements RemoveTask {
         return true;
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        for (TodoTask todo : todos) {
+            // TODO rename method
+            todo.updateTimeCreated();
+        }
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -136,8 +149,39 @@ public class MainMenu extends AppCompatActivity implements RemoveTask {
             return;
         }
 
-        // TODO! receiving null data from EditTask activity. Trying to edit a new task and record the new name of it;
-        Log.d(TAG, "received " + data.getStringExtra("name"));
+
+        Log.d(TAG, "in MainMenu: hash " + data.getExtras().get("hash"));
+
+        // TODO add check.
+        String taskName = data.getExtras().get("name").toString();
+        String hash = data.getExtras().get("hash").toString();
+        String date = data.getExtras().get("date").toString();
+        Log.d(TAG, "date is " + date);
+
+
+        TodoTask changedTask = null;
+
+        for (TodoTask todo : todos) {
+            if (String.valueOf(todo.hashCode()).equals(hash)) {
+                changedTask = todo;
+            }
+        }
+        if (changedTask != null) {
+            changedTask.setText(taskName);
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("dd:MM;yyyy");
+
+        Calendar c = Calendar.getInstance();
+        try {
+            c.setTime(sdf.parse(date));
+        } catch (ParseException e) {
+            c.setTime(new Date(System.currentTimeMillis()));
+        }
+        c.add(Calendar.DATE, 1); // adding one day
+        changedTask.setDeadlineDate(c.getTime());
+
+
+
     }
 
     @Override

@@ -30,12 +30,14 @@ class TodoTask {
     private AppCompatActivity activity;
     private ConstraintLayout todoObject;
     private Date timeCreated;
+    private Date deadlineDate;
 
     private final String TAG = "daywint";
     private int completion = 0;
     private TextView textTimeCreated;
     private TextView textOfTask;
     private boolean finished;
+
 
     static {
         allTasks = new ArrayList<>();
@@ -57,9 +59,6 @@ class TodoTask {
         
         setText("New task..");
         textTimeCreated = todoObject.findViewById(R.id.timeCreated);
-        updateTimeCreated();
-
-
 
         textOfTask.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -127,21 +126,22 @@ class TodoTask {
             }
         });
 
-
         switchToEditingActivity();
 
     }
 
     private void switchToEditingActivity() {
         Intent intent = new Intent(activity, EditTask.class);
+        intent.putExtra("hash", this.hashCode());
+        intent.putExtra("name", textOfTask.getText());
         activity.startActivityForResult(intent, 1);
-
 
     }
 
     void setOnRemoveTask(RemoveTask listener) {
         removeListeners.add(listener);
     }
+
 
     void removeTask() {
 
@@ -173,9 +173,9 @@ class TodoTask {
         finished = false;
     }
 
-    private void updateTimeCreated() {
+    void updateTimeCreated() {
 
-        textTimeCreated.setText(getTimePeriod(new Date(), timeCreated));
+        textTimeCreated.setText(getTimePeriod(new Date(), deadlineDate));
     }
 
     private String getTimePeriod(Date first, Date second) {
@@ -203,9 +203,13 @@ class TodoTask {
 
     }
 
-
-    private void setText(String text) {
+    void setText(String text) {
+        // TODO check user input
         textOfTask.setText(text);
+    }
+
+    void setDeadlineDate(Date date) {
+        deadlineDate = date;
     }
 
     private void addCompletionPoint() {
