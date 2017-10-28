@@ -13,12 +13,12 @@ import android.widget.EditText;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 public class EditTask extends AppCompatActivity {
 
     private static final String TAG = "daywint";
 
-    Bundle fromBundle;
 
     EditText editText;
     Button done;
@@ -37,9 +37,8 @@ public class EditTask extends AppCompatActivity {
         editText = ((EditText) findViewById(R.id.editNameTask));
         done = (Button) findViewById(R.id.editingDone);
 
-        fromBundle = getIntent().getExtras();
         // TODO add check;
-        String name = fromBundle.get("name").toString();
+        String name = getIntent().getStringExtra("name");
         setText(name);
 
 
@@ -47,15 +46,19 @@ public class EditTask extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                String hash = fromBundle.get("hash").toString();
+                Intent fromIntent = getIntent();
+                int hash = getIntent().getIntExtra("hash", 0);
 
+                Log.d(TAG, "Hash " + hash);
                 Intent intent = new Intent();
-                intent.putExtra("name", editText.getText()); // TODO check user input
-
+                String newTaskname = editText.getText().toString();
+                intent.putExtra("name", newTaskname); // TODO check user input
+                String taskDate = sdf.format(cal.getDate());
                 intent.putExtra("hash", hash);
-                intent.putExtra("date", sdf.format(cal.getDate()));
+                intent.putExtra("date", taskDate);
 
-
+                Log.d(TAG, "Finishing editing task, setting the following extras: name " + newTaskname + ", " +
+                        "hash " + hash + ", date " + taskDate);
                 setResult(RESULT_OK, intent);
                 finish();
 
@@ -64,6 +67,7 @@ public class EditTask extends AppCompatActivity {
 
 
 
+        // show keyboard
         editText.requestFocus();
         InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         im.toggleSoftInput(InputMethodManager.SHOW_FORCED,  InputMethodManager.HIDE_IMPLICIT_ONLY);
