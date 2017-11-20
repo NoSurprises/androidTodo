@@ -14,10 +14,16 @@ import android.widget.EditText;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.jar.Attributes;
 
 public class EditTask extends AppCompatActivity {
 
+    public static final int EDITING_FINISHED = 1111;
+    public static final String NAME_FIELD = "name";
+    public static final String ID_FIELD = "id";
+    public static final String DATE_FIELD = "date";
     private static final String TAG = "daywint";
+
 
 
     EditText editText;
@@ -30,6 +36,12 @@ public class EditTask extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_task);
 
+        // getting the data
+        Intent intent = getIntent();
+        String name = intent.getStringExtra(NAME_FIELD);
+        final long id = intent.getLongExtra(ID_FIELD, -1);
+
+
         cal = ((CalendarView) findViewById(R.id.calendarView));
 
         final SimpleDateFormat sdf = new SimpleDateFormat("dd:MM:yyyy");
@@ -37,31 +49,26 @@ public class EditTask extends AppCompatActivity {
         editText = ((EditText) findViewById(R.id.editNameTask));
         done = (Button) findViewById(R.id.editingDone);
 
-        // TODO add check;
-        String name = getIntent().getStringExtra("name");
+        // TODO add check
         setText(name);
+
 
 
         done.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                Intent fromIntent = getIntent();
-                int hash = getIntent().getIntExtra("hash", 0);
+                Intent resultIntent = new Intent();
 
-                Log.d(TAG, "Hash " + hash);
-                Intent intent = new Intent();
                 String newTaskname = editText.getText().toString();
-                intent.putExtra("name", newTaskname); // TODO check user input
                 String taskDate = sdf.format(cal.getDate());
-                intent.putExtra("hash", hash);
-                intent.putExtra("date", taskDate);
 
-                Log.d(TAG, "Finishing editing task, setting the following extras: name " + newTaskname + ", " +
-                        "hash " + hash + ", date " + taskDate);
-                setResult(RESULT_OK, intent);
+                resultIntent.putExtra(NAME_FIELD, newTaskname);
+                resultIntent.putExtra(ID_FIELD, id);
+                resultIntent.putExtra(DATE_FIELD, taskDate);
+
+                setResult(EDITING_FINISHED, resultIntent);
                 finish();
-
             }
         });
 
