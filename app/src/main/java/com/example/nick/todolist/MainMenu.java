@@ -2,11 +2,13 @@ package com.example.nick.todolist;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -29,12 +31,13 @@ import java.util.List;
 public class MainMenu extends AppCompatActivity {
 
     public static final String TAG = "daywint";
+    private static final String CHECK_SHOWALL_PREF = "show_all";
     private MenuItem showAll;
     private List<TodoTask> todos = new ArrayList<>();
     private LinearLayout activities;
     private SQLiteDatabase db;
     private SQLiteOpenHelper dbHelper;
-
+    private SharedPreferences sp;
 
 
     @Override
@@ -50,15 +53,17 @@ public class MainMenu extends AppCompatActivity {
         dbHelper = new TodoDBHelper(this);
         db = dbHelper.getWritableDatabase();
 
-        // get data from db
+        // Get the data from shared preferences.
+        sp = PreferenceManager.getDefaultSharedPreferences(this);
+
+
+
+        // Get the data from database.
         Cursor cursor = getAllTasks();
         cursor.moveToNext();
         Log.d(TAG, "onCreate: in db found " + cursor.getCount());
         for (int i = 0; i < cursor.getCount(); i++) {
-            // TODO remake
-//                //inflating the list with the new taskTodo
 
-            //inflating the new layout
             ConstraintLayout newTaskView = (ConstraintLayout) getLayoutInflater().inflate(R.layout.one_activity, null);
             activities.addView(newTaskView);
 
@@ -97,9 +102,14 @@ public class MainMenu extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
-
         getMenuInflater().inflate(R.menu.menu, menu);
+
+        // Get the data from the sharedPreferences.
+        boolean showAllPref = sp.getBoolean(CHECK_SHOWALL_PREF, true);
+
         showAll = menu.findItem(R.id.showAll);
+        showAll.setChecked(showAllPref);
+        manageShowAll();
         return true;
     }
 
@@ -132,17 +142,10 @@ public class MainMenu extends AppCompatActivity {
             case R.id.showAll: {
 
                 showAll.setChecked(!showAll.isChecked());
-                if (!showAll.isChecked()) {
-                    for (TodoTask todo : todos) {
-                        if (todo.isFinished()) {
-                            todo.hide();
-                        }
-                    }
-                } else {
-                    for (TodoTask todo : todos) {
-                        todo.show();
-                    }
-                }
+
+                manageShowAll();
+
+                sp.edit().putBoolean(CHECK_SHOWALL_PREF, showAll.isChecked()).apply();
                 break;
             }
             case R.id.removeFinished: {
@@ -162,6 +165,20 @@ public class MainMenu extends AppCompatActivity {
             }
         }
         return true;
+    }
+
+    private void manageShowAll() {
+        if (!showAll.isChecked()) {
+            for (TodoTask todo : todos) {
+                if (todo.isFinished()) {
+                    todo.hide();
+                }
+            }
+        } else {
+            for (TodoTask todo : todos) {
+                todo.show();
+            }
+        }
     }
 
     private void removeTask(TodoTask todo) {
@@ -390,7 +407,7 @@ public class MainMenu extends AppCompatActivity {
             if (!isFinished()){
                 completionPoints++;
 
-                if (completionPoints == 3) {
+                if (completionPoints == MAX_COMPLETION_POINTS) {
                     // set checked
                     ((CheckBox) taskView.getChildAt(0)).setChecked(true);
                 }
