@@ -6,30 +6,24 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.PopupMenu;
-import android.text.Layout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-
-import static android.R.attr.data;
 
 
 public class MainMenu extends AppCompatActivity {
@@ -73,8 +67,9 @@ public class MainMenu extends AppCompatActivity {
             String name = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
             int completion = cursor.getInt(cursor.getColumnIndex(TodotaskContract.TodoEntry.COMPLETION));
             long id = cursor.getInt(cursor.getColumnIndex(TodotaskContract.TodoEntry._ID));
+            long dateDeadline = cursor.getLong(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
             Log.d(TAG, "onCreate: from db: " + name + " " + completion + " " + id);
-            TodoTask newTask = new TodoTask(newTaskView, name, completion, null, null, id);
+            TodoTask newTask = new TodoTask(newTaskView, name, completion, null, new Date(dateDeadline), id);
 
             cursor.moveToNext();
             todos.add(newTask);
@@ -206,7 +201,7 @@ public class MainMenu extends AppCompatActivity {
 
             String taskName = data.getStringExtra(EditTask.NAME_FIELD);
             long id = data.getLongExtra(EditTask.ID_FIELD, -1);
-            String date = data.getStringExtra(EditTask.DATE_FIELD);
+            Date date = new Date(data.getLongExtra(EditTask.DATE_FIELD, new Date().getTime()));
 
             Log.d(TAG, "onActivityResult: received " + taskName + " " + id + " " + date);
 
@@ -220,11 +215,9 @@ public class MainMenu extends AppCompatActivity {
             assert changedTask != null;
 
 
-
             // TODO date V V V
-            changedTask.updateTask(id, taskName, changedTask.completionPoints, null, null);
+            changedTask.updateTask(id, taskName, changedTask.completionPoints, date);
             changedTask.setText(changedTask.name);
-
 
         }
     }
@@ -282,7 +275,7 @@ public class MainMenu extends AppCompatActivity {
                         TodoTask.this.completionPoints = 0;
                     }
                     updateTask(TodoTask.this.id,TodoTask.this.name, TodoTask.this.completionPoints,
-                            TodoTask.this.dateCreated, TodoTask.this.dateDeadline);
+                             TodoTask.this.dateDeadline);
                 }
             });
 
@@ -304,7 +297,7 @@ public class MainMenu extends AppCompatActivity {
 
 
         public TodoTask(ConstraintLayout newTaskView) {
-            this(newTaskView, "New task", 0, null, null);
+            this(newTaskView, "New task", 0, null, new Date());
         }
 
         void setText(String name) {
@@ -320,15 +313,15 @@ public class MainMenu extends AppCompatActivity {
 
         }
 
-        void updateTask(long id, String name, int completionPoints, Date dateCreated, Date dateDeadline) {
+        void updateTask(long id, String name, int completionPoints,  Date dateDeadline) {
             this.name = name;
             this.completionPoints = completionPoints;
-            this.dateCreated = dateCreated;
             this.dateDeadline = dateDeadline;
 
             ContentValues cv = new ContentValues();
             cv.put(TodotaskContract.TodoEntry.NAME, name);
             cv.put(TodotaskContract.TodoEntry.COMPLETION, completionPoints);
+            cv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, dateDeadline.getTime());
 
             db.update(TodoDBHelper.TABLE_NAME, cv, TodotaskContract.TodoEntry._ID +"="+id, null);
 
@@ -337,7 +330,40 @@ public class MainMenu extends AppCompatActivity {
 
         }
 
+        private void updateTime() {
+            ((TextView) taskView.getChildAt(1)).setText(timeLeft(dateDeadline));
+        }
+
+        private String timeLeft(Date deadline) {
+            Date now = new Date();
+            Date timeSinceZero = new Date(deadline.getTime() - now.getTime());
+            Log.d(TAG, "timeLeft: time since zero " + timeSinceZero);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
+            String timeLeftString = sdf.format(timeSinceZero);
+            Log.d(TAG, "timeLeft: string " + timeLeftString);
+            String[] timeLeft = timeLeftString.split("-");
+            String[] ranges = {"y", "mon", "d", "h", "m", "s"};
+            int[] timeLeftInts = new int[6];
+            for (int i = 0; i < 6; i++) {
+                timeLeftInts[i] = Integer.valueOf(timeLeft[i]);
+                if (i ==0 ) {
+                    timeLeftInts[i] -= 1970;
+                }
+                if (i == 1 || i == 2) {
+                    timeLeftInts[i] -= 1;
+                }
+            }
+            for (int i = 0; i < 6; i++) {
+                if (timeLeftInts[i] != 0) {
+                    return timeLeftInts[i] + " " + ranges[i];
+                }
+            }
+
+            return timeLeftString;
+        }
+
         void updateBackground() {
+            updateTime();
             int valueForColors = (int) (255 * ((float) completionPoints / MAX_COMPLETION_POINTS));
             taskView.getChildAt(2).setBackgroundColor(Color.rgb(255-valueForColors, 255, 255-valueForColors));
             taskView.getChildAt(2).getBackground().setAlpha(30);
@@ -369,7 +395,7 @@ public class MainMenu extends AppCompatActivity {
                     ((CheckBox) taskView.getChildAt(0)).setChecked(true);
                 }
 
-                updateTask(id, name, completionPoints, dateCreated, dateDeadline);
+                updateTask(id, name, completionPoints, dateDeadline);
             }
 
         }

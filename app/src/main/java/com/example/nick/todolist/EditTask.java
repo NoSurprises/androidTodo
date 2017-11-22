@@ -3,6 +3,7 @@ package com.example.nick.todolist;
 import android.app.ActionBar;
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,6 +16,7 @@ import android.widget.EditText;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import java.util.jar.Attributes;
 
 public class EditTask extends AppCompatActivity {
@@ -31,6 +33,7 @@ public class EditTask extends AppCompatActivity {
     EditText editText;
     Button done;
     CalendarView cal;
+    Calendar deadlineDate;
 
 
     @Override
@@ -57,16 +60,23 @@ public class EditTask extends AppCompatActivity {
 
 
         cal = ((CalendarView) findViewById(R.id.calendarView));
-
-        final SimpleDateFormat sdf = new SimpleDateFormat("dd:MM:yyyy");
-
         editText = ((EditText) findViewById(R.id.editNameTask));
         done = (Button) findViewById(R.id.editingDone);
-
+        deadlineDate = Calendar.getInstance();
+        deadlineDate.set(Calendar.HOUR_OF_DAY, 23);
+        deadlineDate.set(Calendar.MINUTE, 59);
+        deadlineDate.set(Calendar.SECOND, 0);
 
 
         setText(name);
 
+
+        cal.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+            @Override
+            public void onSelectedDayChange(@NonNull CalendarView calendarView, int i, int i1, int i2) {
+                deadlineDate.set(i, i1, i2);
+            }
+        });
 
 
         done.setOnClickListener(new View.OnClickListener() {
@@ -76,11 +86,11 @@ public class EditTask extends AppCompatActivity {
                 Intent resultIntent = new Intent();
 
                 String newTaskname = editText.getText().toString();
-                String taskDate = sdf.format(cal.getDate());
-
+                long taskDate = cal.getDate();
+                Log.d(TAG, "onClick in EditTask: task date is " + new Date(taskDate));
                 resultIntent.putExtra(NAME_FIELD, newTaskname);
                 resultIntent.putExtra(ID_FIELD, id);
-                resultIntent.putExtra(DATE_FIELD, taskDate);
+                resultIntent.putExtra(DATE_FIELD, deadlineDate.getTime().getTime());
 
                 setResult(EDITING_FINISHED, resultIntent);
                 finish();
