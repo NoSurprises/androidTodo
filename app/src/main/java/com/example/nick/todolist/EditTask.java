@@ -63,7 +63,8 @@ public class EditTask extends AppCompatActivity {
         editText = ((EditText) findViewById(R.id.editNameTask));
         done = (Button) findViewById(R.id.editingDone);
 
-        // TODO add check
+
+
         setText(name);
 
 
@@ -92,6 +93,7 @@ public class EditTask extends AppCompatActivity {
         InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         im.toggleSoftInput(InputMethodManager.SHOW_FORCED,  InputMethodManager.HIDE_IMPLICIT_ONLY);
         editText.selectAll();
+
 
 
     }

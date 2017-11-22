@@ -338,8 +338,9 @@ public class MainMenu extends AppCompatActivity {
         }
 
         void updateBackground() {
-            ((TextView) taskView.getChildAt(2)).setBackgroundColor(Color.rgb(100,100 + completionPoints*50, 100));
-            ((TextView) taskView.getChildAt(2)).getBackground().setAlpha(30);
+            int valueForColors = (int) (255 * ((float) completionPoints / MAX_COMPLETION_POINTS));
+            taskView.getChildAt(2).setBackgroundColor(Color.rgb(255-valueForColors, 255, 255-valueForColors));
+            taskView.getChildAt(2).getBackground().setAlpha(30);
         }
 
         void remove() {
