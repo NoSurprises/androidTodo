@@ -286,6 +286,14 @@ public class MainMenu extends AppCompatActivity {
                 }
             });
 
+            taskView.getChildAt(2).setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    startEditing();
+                    return true;
+                }
+            });
+
             taskView.getChildAt(2).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
