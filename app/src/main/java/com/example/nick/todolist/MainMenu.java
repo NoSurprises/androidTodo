@@ -19,13 +19,19 @@ import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 public class MainMenu extends AppCompatActivity {
@@ -345,6 +351,10 @@ public class MainMenu extends AppCompatActivity {
             updateBackground();
             updateCountTodos();
 
+            if (!showAll.isChecked() && isFinished()) {
+                hide();
+            }
+
         }
 
         private void updateTime() {
@@ -353,30 +363,29 @@ public class MainMenu extends AppCompatActivity {
 
         private String timeLeft(Date deadline) {
             Date now = new Date();
-            Date timeSinceZero = new Date(deadline.getTime() - now.getTime());
-            Log.d(TAG, "timeLeft: time since zero " + timeSinceZero);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
-            String timeLeftString = sdf.format(timeSinceZero);
-            Log.d(TAG, "timeLeft: string " + timeLeftString);
-            String[] timeLeft = timeLeftString.split("-");
-            String[] ranges = {"y", "mon", "d", "h", "m", "s"};
-            int[] timeLeftInts = new int[6];
-            for (int i = 0; i < 6; i++) {
-                timeLeftInts[i] = Integer.valueOf(timeLeft[i]);
-                if (i ==0 ) {
-                    timeLeftInts[i] -= 1970;
-                }
-                if (i == 1 || i == 2) {
-                    timeLeftInts[i] -= 1;
-                }
+            long difference = deadline.getTime() - now.getTime();
+
+
+            List<TimeUnit> units = new ArrayList<>(EnumSet.allOf(TimeUnit.class));
+            Collections.reverse(units);
+            Map<TimeUnit,Long> result = new LinkedHashMap<>();
+            long milliesRest = difference;
+            for ( TimeUnit unit : units ) {
+                // cutting off the most valuable part of the rest millies
+                long diff = unit.convert(milliesRest,TimeUnit.MILLISECONDS);
+                long diffInMilliesForUnit = unit.toMillis(diff);
+                milliesRest = milliesRest - diffInMilliesForUnit;
+                result.put(unit,diff);
             }
-            for (int i = 0; i < 6; i++) {
-                if (timeLeftInts[i] != 0) {
-                    return timeLeftInts[i] + " " + ranges[i];
+
+
+            for (TimeUnit unit : units) {
+                if (result.get(unit) != 0) {
+                    return String.valueOf(result.get(unit)) + " " + unit.toString();
                 }
             }
 
-            return timeLeftString;
+            return "";
         }
 
         void updateBackground() {
