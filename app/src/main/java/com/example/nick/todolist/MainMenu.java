@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.PopupMenu;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,6 +19,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.sql.Time;
 import java.text.SimpleDateFormat;
@@ -238,7 +240,6 @@ public class MainMenu extends AppCompatActivity {
             assert changedTask != null;
 
 
-            // TODO date V V V
             changedTask.updateTask(id, taskName, changedTask.completionPoints, date);
             changedTask.setText(changedTask.name);
 
@@ -305,10 +306,32 @@ public class MainMenu extends AppCompatActivity {
             taskView.getChildAt(2).setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View view) {
-                    startEditing();
+                    PopupMenu menu = new PopupMenu(MainMenu.this, taskView.getChildAt(2));
+                    menu.inflate(R.menu.item_context_menu);
+                    menu.show();
+
+                    menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            switch (item.getItemId()) {
+                                case R.id.edit : {
+                                    startEditing();
+                                    break;
+                                }
+                                case R.id.remove : {
+                                    Toast.makeText(MainMenu.this, "deleting", Toast.LENGTH_SHORT).show();
+                                    break;
+                                }
+
+                            }
+
+                            return true;
+                        }
+                    });
                     return true;
                 }
             });
+
 
             taskView.getChildAt(2).setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -317,6 +340,8 @@ public class MainMenu extends AppCompatActivity {
                 }
             });
         }
+
+
 
 
         public TodoTask(ConstraintLayout newTaskView) {
