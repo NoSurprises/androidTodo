@@ -19,13 +19,8 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.sql.Time;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -191,7 +186,7 @@ public class MainMenu extends AppCompatActivity {
 
     private void removeTask(TodoTask todo) {
         // Removing task from db
-        todo.remove();
+        todo.removeFromDb();
 
         // Deleting the view
         activities.removeView(todo.taskView);
@@ -294,7 +289,7 @@ public class MainMenu extends AppCompatActivity {
                     Log.d(TAG, "onClick: checked " + taskView);
                     TodoTask.this.completionPoints = 3;
                     if (!((CheckBox) view).isChecked()) {
-                        Log.d(TAG, "onClick: remove completion");
+                        Log.d(TAG, "onClick: removeFromDb completion");
 
                         TodoTask.this.completionPoints = 0;
                     }
@@ -319,7 +314,7 @@ public class MainMenu extends AppCompatActivity {
                                     break;
                                 }
                                 case R.id.remove : {
-                                    Toast.makeText(MainMenu.this, "deleting", Toast.LENGTH_SHORT).show();
+                                    removeTask(TodoTask.this);
                                     break;
                                 }
 
@@ -420,9 +415,10 @@ public class MainMenu extends AppCompatActivity {
             taskView.getChildAt(2).getBackground().setAlpha(30);
         }
 
-        void remove() {
-            Log.d(TAG, "remove: removing " + id);
+        void removeFromDb() {
+            Log.d(TAG, "removeFromDb: removing " + id);
             db.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID + "=" + id, null);
+
         }
 
         public boolean isFinished() {
