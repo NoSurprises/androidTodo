@@ -1,9 +1,11 @@
-package com.example.nick.todolist;
+package com.example.nick.todolist.data;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+
+import com.example.nick.todolist.data.TodotaskContract;
 
 import static com.example.nick.todolist.MainMenu.TAG;
 

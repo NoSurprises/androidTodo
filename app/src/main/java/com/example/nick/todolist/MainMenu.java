@@ -11,7 +11,8 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.PopupMenu;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +20,9 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.example.nick.todolist.data.TodoDBHelper;
+import com.example.nick.todolist.data.TodotaskContract;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,10 +41,12 @@ public class MainMenu extends AppCompatActivity {
     private static final String CHECK_SHOWALL_PREF = "show_all";
     private MenuItem showAll;
     private List<TodoTask> todos = new ArrayList<>();
-    private LinearLayout activities;
+    private RecyclerView mActivitiesRecyclerView;
     private SQLiteDatabase db;
     private SQLiteOpenHelper dbHelper;
     private SharedPreferences sp;
+    private TodotaskAdapter mAdapter;
+    static boolean showAllChecked;
 
 
     @Override
@@ -48,41 +54,44 @@ public class MainMenu extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
 
-        // creating the list of todos
-        activities = (LinearLayout) findViewById(R.id.activities);
+        // Creating the recycler view with all tasks
+        mActivitiesRecyclerView = (RecyclerView) findViewById(R.id.activities);
 
         Log.d(TAG, "onCreate: connecting to db");
-        // connect to db
+        // Connect to db
         dbHelper = new TodoDBHelper(this);
         db = dbHelper.getWritableDatabase();
 
         // Get the data from shared preferences.
         sp = PreferenceManager.getDefaultSharedPreferences(this);
 
-
-
-        // Get the data from database.
+        // Get the cursor from database.
         Cursor cursor = getAllTasks();
         cursor.moveToNext();
         Log.d(TAG, "onCreate: in db found " + cursor.getCount());
         for (int i = 0; i < cursor.getCount(); i++) {
 
             ConstraintLayout newTaskView = (ConstraintLayout) getLayoutInflater().inflate(R.layout.one_activity, null);
-            activities.addView(newTaskView);
 
             Log.d(TAG, "onCreate: creating new TodoTask " + cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.NAME)));
-//                //creating the object of the new task
+
+            // Getting data from the db
             String name = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
             int completion = cursor.getInt(cursor.getColumnIndex(TodotaskContract.TodoEntry.COMPLETION));
             long id = cursor.getInt(cursor.getColumnIndex(TodotaskContract.TodoEntry._ID));
             long dateDeadline = cursor.getLong(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
             Log.d(TAG, "onCreate: from db: " + name + " " + completion + " " + id);
+            // Creating the TodoTask
             TodoTask newTask = new TodoTask(newTaskView, name, completion, null, new Date(dateDeadline), id);
 
             cursor.moveToNext();
             todos.add(newTask);
         }
         cursor.close();
+
+        mAdapter = new TodotaskAdapter(this, todos);
+        mActivitiesRecyclerView.setAdapter(mAdapter);
+        mActivitiesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         updateCountTodos();
     }
@@ -125,7 +134,7 @@ public class MainMenu extends AppCompatActivity {
 
                 //inflating the new layout
                 ConstraintLayout newTaskView = (ConstraintLayout) getLayoutInflater().inflate(R.layout.one_activity, null);
-                activities.addView(newTaskView);
+                mActivitiesRecyclerView.addView(newTaskView);
                 //creating the object of the new task
                 TodoTask newTask = new TodoTask(newTaskView);
 
@@ -137,7 +146,7 @@ public class MainMenu extends AppCompatActivity {
             case R.id.clear: {
 
                 todos.clear();
-                activities.removeAllViews();
+                mActivitiesRecyclerView.removeAllViews();
                 db.delete(TodoDBHelper.TABLE_NAME, null, null);
 
                 break;
@@ -145,9 +154,8 @@ public class MainMenu extends AppCompatActivity {
             case R.id.showAll: {
 
                 showAll.setChecked(!showAll.isChecked());
-
+                showAllChecked = showAll.isChecked();
                 manageShowAll();
-
                 sp.edit().putBoolean(CHECK_SHOWALL_PREF, showAll.isChecked()).apply();
                 break;
             }
@@ -171,17 +179,7 @@ public class MainMenu extends AppCompatActivity {
     }
 
     private void manageShowAll() {
-        if (!showAll.isChecked()) {
-            for (TodoTask todo : todos) {
-                if (todo.isFinished()) {
-                    todo.hide();
-                }
-            }
-        } else {
-            for (TodoTask todo : todos) {
-                todo.show();
-            }
-        }
+        mAdapter.tasksUpdated();
     }
 
     private void removeTask(TodoTask todo) {
@@ -189,7 +187,7 @@ public class MainMenu extends AppCompatActivity {
         todo.removeFromDb();
 
         // Deleting the view
-        activities.removeView(todo.taskView);
+        mActivitiesRecyclerView.removeView(todo.taskView);
         Log.d(TAG, "removeTask: " + todo.taskView);
 
         // Remove reference
@@ -241,7 +239,7 @@ public class MainMenu extends AppCompatActivity {
         }
     }
 
-    private class TodoTask {
+    class TodoTask {
         long id;
         String name;
         int completionPoints;
@@ -283,49 +281,7 @@ public class MainMenu extends AppCompatActivity {
                 ((CheckBox) taskView.getChildAt(0)).setChecked(true);
             }
 
-            taskView.getChildAt(0).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.d(TAG, "onClick: checked " + taskView);
-                    TodoTask.this.completionPoints = 3;
-                    if (!((CheckBox) view).isChecked()) {
-                        Log.d(TAG, "onClick: removeFromDb completion");
 
-                        TodoTask.this.completionPoints = 0;
-                    }
-                    updateTask(TodoTask.this.id,TodoTask.this.name, TodoTask.this.completionPoints,
-                             TodoTask.this.dateDeadline);
-                }
-            });
-
-            taskView.getChildAt(2).setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    PopupMenu menu = new PopupMenu(MainMenu.this, taskView.getChildAt(2));
-                    menu.inflate(R.menu.item_context_menu);
-                    menu.show();
-
-                    menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            switch (item.getItemId()) {
-                                case R.id.edit : {
-                                    startEditing();
-                                    break;
-                                }
-                                case R.id.remove : {
-                                    removeTask(TodoTask.this);
-                                    break;
-                                }
-
-                            }
-
-                            return true;
-                        }
-                    });
-                    return true;
-                }
-            });
 
 
             taskView.getChildAt(2).setOnClickListener(new View.OnClickListener() {
@@ -367,21 +323,17 @@ public class MainMenu extends AppCompatActivity {
             cv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, dateDeadline.getTime());
 
             db.update(TodoDBHelper.TABLE_NAME, cv, TodotaskContract.TodoEntry._ID +"="+id, null);
+            mAdapter.tasksUpdated();
 
-            updateBackground();
             updateCountTodos();
-
-            if (!showAll.isChecked() && isFinished()) {
-                hide();
-            }
 
         }
 
-        private void updateTime() {
+         void updateTime() {
             ((TextView) taskView.getChildAt(1)).setText(timeLeft(dateDeadline));
         }
 
-        private String timeLeft(Date deadline) {
+          String timeLeft(Date deadline) {
             Date now = new Date();
             long difference = deadline.getTime() - now.getTime();
 

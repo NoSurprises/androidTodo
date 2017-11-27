@@ -1,4 +1,4 @@
-package com.example.nick.todolist;
+package com.example.nick.todolist.data;
 
 import android.provider.BaseColumns;
 
