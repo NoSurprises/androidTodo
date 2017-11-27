@@ -1,6 +1,10 @@
 package com.example.nick.todolist;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -13,10 +17,17 @@ import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.nick.todolist.data.TodoDBHelper;
+import com.example.nick.todolist.data.TodotaskContract;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.example.nick.todolist.MainMenu.TAG;
 
@@ -26,20 +37,14 @@ import static com.example.nick.todolist.MainMenu.TAG;
 
 public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewholder> {
     private final Context mContext;
-    private final List<MainMenu.TodoTask> todoTasks;
-    private final List<MainMenu.TodoTask> todoActiveTasks;
+    private Cursor mCursor;
+    private SQLiteDatabase mDb;
+    public static final int MAX_COMPLETION_POINTS = 3;
 
-    public TodotaskAdapter(Context context, List<MainMenu.TodoTask> todoTasks) {
+    public TodotaskAdapter(Context context, Cursor cursor, SQLiteDatabase mDb) {
         this.mContext = context;
-        this.todoTasks = todoTasks;
-
-        todoActiveTasks = new ArrayList<>();
-        for (MainMenu.TodoTask todoTask : todoTasks) {
-            if (!todoTask.isFinished()) {
-                todoActiveTasks.add(todoTask);
-            }
-        }
-
+        this.mCursor = cursor;
+        this.mDb = mDb;
     }
 
     @Override
@@ -50,41 +55,157 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
     }
 
     @Override
-    public void onBindViewHolder(TodotaskViewholder holder, int position) {
+    public void onBindViewHolder(final TodotaskViewholder holder, int position) {
 
-        List<MainMenu.TodoTask> usingSource;
-        if (MainMenu.showAllChecked) {
-            usingSource = todoTasks;
-        }
-        else {
-            usingSource = todoActiveTasks;
-        }
-        MainMenu.TodoTask todoTask = usingSource.get(position);
-        if (todoTask == null)
+        Log.d(TAG, "onBindViewHolder: ");
+        if (!mCursor.moveToPosition(position)) {
+            // No such position at db
             return;
+        }
 
-        holder.mNameTextView.setText(todoTask.name);
-        holder.mDeadlineTextView.setText(todoTask.timeLeft(todoTask.dateDeadline));
-        holder.mFinishedCheckBox.setChecked(todoTask.isFinished());
-        holder.mTask = todoTask;
+        String name = mCursor.getString(mCursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
+        long deadline = mCursor.getLong(mCursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
+        final int completion = mCursor.getInt(mCursor.getColumnIndex(TodotaskContract.TodoEntry.COMPLETION));
+        final int id = mCursor.getInt(mCursor.getColumnIndex(TodotaskContract.TodoEntry._ID));
+
+        final ContentValues cv = new ContentValues();
+        cv.put(TodotaskContract.TodoEntry.NAME, name);
+        cv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, deadline);
+        cv.put(TodotaskContract.TodoEntry.COMPLETION, completion);
+        cv.put(TodotaskContract.TodoEntry._ID, id);
+
+        holder.mNameTextView.setText(name);
+        holder.mDeadlineTextView.setText(timeLeft(deadline));
+        holder.mFinishedCheckBox.setChecked(completion == MAX_COMPLETION_POINTS);
 
 
 
-        int valueForColors = (int) (255 * ((float) todoTask.completionPoints / todoTask.MAX_COMPLETION_POINTS));
-        holder.mNameTextView.setBackgroundColor(Color.rgb(255-valueForColors, 255, 255-valueForColors));
-        holder.mNameTextView.getBackground().setAlpha(30);
+        holder.mNameTextView.setOnClickListener(new View.OnClickListener() {
+            int lCompletion = completion;
+            ContentValues lCv = cv;
 
+            @Override
+            public void onClick(View v) {
+                if (lCompletion == MAX_COMPLETION_POINTS)
+                    return;
+
+                lCompletion++;
+                if (lCompletion == MAX_COMPLETION_POINTS) {
+                    holder.mFinishedCheckBox.setChecked(true);
+                }
+                lCv.put(TodotaskContract.TodoEntry.COMPLETION, lCompletion);
+
+                // Updating the entry in the db
+                mDb.update(TodoDBHelper.TABLE_NAME, lCv,
+                        TodotaskContract.TodoEntry._ID+"="+lCv.getAsInteger(TodotaskContract.TodoEntry._ID), null);
+
+                holder.updateBackground(lCompletion);
+
+
+            }
+        });
+        holder.mFinishedCheckBox.setOnClickListener(new View.OnClickListener() {
+            int lCompletion = completion;
+            ContentValues lCv = cv;
+
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "onClick: checked " + holder.mNameTextView.getText().toString());
+                lCompletion = 3;
+                if (!((CheckBox) view).isChecked()) {
+                    Log.d(TAG, "onClick: removeFromDb completion");
+
+                    lCompletion = 0;
+                }
+
+                lCv.put(TodotaskContract.TodoEntry.COMPLETION, lCompletion);
+
+                // Updating the entry in the db
+                mDb.update(TodoDBHelper.TABLE_NAME, lCv,
+                        TodotaskContract.TodoEntry._ID+"="+lCv.getAsInteger(TodotaskContract.TodoEntry._ID), null);
+
+
+                holder.updateBackground(lCompletion);
+
+            }
+        });
+        holder.mNameTextView.setOnLongClickListener(new View.OnLongClickListener() {
+            int tmp = 0; //todo delete, just to hide the code block
+            @Override
+            public boolean onLongClick(View view) {
+                PopupMenu menu = new PopupMenu(mContext, holder.mNameTextView);
+                menu.inflate(R.menu.item_context_menu);
+                menu.show();
+
+                menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.edit : {
+                                startEditing(id);
+                                break;
+                            }
+                            case R.id.remove : {
+                                //removeTask(mTask);
+                                Toast.makeText(mContext, "Deleting", Toast.LENGTH_SHORT).show();
+                                break;
+                            }
+                        }
+                        return true;
+                    }
+                });
+                return true;
+            }
+        });
+
+        holder.updateBackground(completion);
 
     }
+
+    /**
+     * Return the time in short format to the specified date
+     * @param deadline the end point of the time interval
+     * @return String representation of the time left
+     */
+    String timeLeft(long deadline) {
+        Date now = new Date();
+        long difference = deadline - now.getTime();
+
+
+        List<TimeUnit> units = new ArrayList<>(EnumSet.allOf(TimeUnit.class));
+        Collections.reverse(units);
+        Map<TimeUnit,Long> result = new LinkedHashMap<>();
+        long milliesRest = difference;
+        for ( TimeUnit unit : units ) {
+            // cutting off the most valuable part of the rest millies
+            long diff = unit.convert(milliesRest,TimeUnit.MILLISECONDS);
+            long diffInMilliesForUnit = unit.toMillis(diff);
+            milliesRest = milliesRest - diffInMilliesForUnit;
+            result.put(unit,diff);
+        }
+
+
+        for (TimeUnit unit : units) {
+            if (result.get(unit) != 0) {
+                return String.valueOf(result.get(unit)) + " " + unit.toString();
+            }
+        }
+
+        return "";
+    }
+
 
     @Override
     public int getItemCount() {
-        return todoTasks.size();
+        return mCursor.getCount();
     }
 
-    public void tasksUpdated() {
-        Log.d(TAG, "tasksUpdated: new count " + todoTasks.size());
 
+    public void swapCursor(Cursor cursor) {
+        if (mCursor != null) {
+            mCursor.close();
+        }
+        mCursor = cursor;
         this.notifyDataSetChanged();
     }
 
@@ -94,7 +215,7 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
         TextView mDeadlineTextView;
         CheckBox mFinishedCheckBox;
         private View mView;
-        MainMenu.TodoTask mTask;
+
 
         public TodotaskViewholder(View itemView) {
             super(itemView);
@@ -104,65 +225,23 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
             mFinishedCheckBox = itemView.findViewById(R.id.finishedCheckBox);
             mView = itemView;
 
-
-            mFinishedCheckBox.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.d(TAG, "onClick: checked " + mNameTextView.getText().toString());
-                    mTask.completionPoints = 3;
-                    if (!((CheckBox) view).isChecked()) {
-                        Log.d(TAG, "onClick: removeFromDb completion");
-
-                        mTask.completionPoints = 0;
-                    }
-                    mTask.updateTask(mTask.id, mTask.name, mTask.completionPoints,
-                            mTask.dateDeadline);
-                }
-            });
-
-            mNameTextView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    PopupMenu menu = new PopupMenu(mContext, mNameTextView);
-                    menu.inflate(R.menu.item_context_menu);
-                    menu.show();
-
-                    menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            switch (item.getItemId()) {
-                                case R.id.edit : {
-                                    mTask.startEditing();
-                                    break;
-                                }
-                                case R.id.remove : {
-                                    //removeTask(mTask);
-                                    Toast.makeText(mContext, "Deleting", Toast.LENGTH_SHORT).show();
-                                    break;
-                                }
-                            }
-                            return true;
-                        }
-                    });
-                    return true;
-                }
-            });
-
-
+        }
+        void updateBackground(int completionPoints) {
+            int valueForColors = (int) (255 * ((float) completionPoints / MAX_COMPLETION_POINTS));
+            mNameTextView.setBackgroundColor(Color.rgb(255-valueForColors, 255, 255-valueForColors));
+            mNameTextView.getBackground().setAlpha(30);
         }
 
-        List<Object> items =new ArrayList<>();
-        Map<Integer,Object> deletedItems = new HashMap<>();
 
 
-        public void hideItem(final int position) {
-            deletedItems.put(position, items.get(position));
-            items.remove(position);
-            notifyItemRemoved(position);
-        }
-        void show() {
-            mView.setVisibility(View.VISIBLE);
-        }
+    }
+
+    private void startEditing(long mId) {
+        Intent intent = new Intent(mContext, EditTask.class);
+        intent.putExtra(TodotaskContract.TodoEntry._ID, mId);
+
+        mContext.startActivity(intent);
+
     }
 
 
