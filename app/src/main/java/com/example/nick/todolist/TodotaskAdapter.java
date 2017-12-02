@@ -75,9 +75,14 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
         cv.put(TodotaskContract.TodoEntry._ID, id);
 
         holder.mNameTextView.setText(name);
-        holder.mDeadlineTextView.setText(timeLeft(deadline));
         holder.mFinishedCheckBox.setChecked(completion == MAX_COMPLETION_POINTS);
-
+        if (completion != MAX_COMPLETION_POINTS)
+        {
+            holder.mDeadlineTextView.setText(timeLeft(deadline));
+        }
+        else {
+            holder.mDeadlineTextView.setText("");
+        }
 
 
         holder.mNameTextView.setOnClickListener(new View.OnClickListener() {
@@ -231,9 +236,6 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
             mNameTextView.setBackgroundColor(Color.rgb(255-valueForColors, 255, 255-valueForColors));
             mNameTextView.getBackground().setAlpha(30);
         }
-
-
-
     }
 
     private void startEditing(long mId) {
