@@ -30,7 +30,6 @@ public class MainMenu extends AppCompatActivity {
 
     public static final String TAG = "daywint";
     private static final String CHECK_SHOWALL_PREF = "show_all";
-    private MenuItem showAll;
     private RecyclerView mActivitiesRecyclerView;
     private SQLiteDatabase mDb;
     private SQLiteOpenHelper dbHelper;
@@ -90,12 +89,7 @@ public class MainMenu extends AppCompatActivity {
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.menu, menu);
 
-        // Get the data from the sharedPreferences.
-        boolean showAllPref = sp.getBoolean(CHECK_SHOWALL_PREF, true);
 
-        showAll = menu.findItem(R.id.showAll);
-        showAll.setChecked(showAllPref);
-        manageShowAll();
         return true;
     }
 
@@ -107,47 +101,22 @@ public class MainMenu extends AppCompatActivity {
             case R.id.add: {
 
                 // TODO add value to the mDb
-
-
                 mAdapter.swapCursor(getAllTasks());
                 break;
             }
 
             case R.id.clear: {
-
                 mActivitiesRecyclerView.removeAllViews();
                 mDb.delete(TodoDBHelper.TABLE_NAME, null, null);
 
                 break;
             }
-            case R.id.showAll: {
 
-                showAll.setChecked(!showAll.isChecked());
-                showAllChecked = showAll.isChecked();
-                manageShowAll();
-                sp.edit().putBoolean(CHECK_SHOWALL_PREF, showAll.isChecked()).apply();
-                break;
-            }
-            case R.id.removeFinished: {
-
-                // TODO remove from mDb
-                mAdapter.swapCursor(getAllTasks());
-                break;
-            }
         }
         return true;
     }
 
-    private void manageShowAll() {
-        mAdapter.swapCursor(getAllTasks());
-    }
 
-    private void removeTask(int id) {
-        // todo Removing task from mDb
-
-        mAdapter.swapCursor(getAllTasks());
-
-    }
 
 
     @Override

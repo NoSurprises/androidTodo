@@ -55,7 +55,7 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
     }
 
     @Override
-    public void onBindViewHolder(final TodotaskViewholder holder, int position) {
+    public void onBindViewHolder(final TodotaskViewholder holder, final int position) {
 
         Log.d(TAG, "onBindViewHolder: ");
         if (!mCursor.moveToPosition(position)) {
@@ -92,8 +92,8 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
                                 break;
                             }
                             case R.id.remove : {
-                                //removeTask(mTask);
-                                Toast.makeText(mContext, "Deleting", Toast.LENGTH_SHORT).show();
+
+                                removeItem(id, position);
                                 break;
                             }
                         }
@@ -105,6 +105,12 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
         });
 
 
+    }
+
+    private void removeItem(int id, int position) {
+        mDb.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID+"="+id, null);
+        notifyItemRemoved(position);
+        swapCursor();
     }
 
     /**
@@ -151,8 +157,12 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
             mCursor.close();
         }
         mCursor = cursor;
-        this.notifyDataSetChanged();
     }
+    public void swapCursor() {
+        Cursor newCursor = mDb.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null, null);
+        swapCursor(newCursor);
+    }
+
 
     public class TodotaskViewholder extends RecyclerView.ViewHolder  {
 

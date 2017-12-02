@@ -11,13 +11,5 @@
         android:checkable="false"
         android:title="@string/clear_all"
         android:visible="true" />
-    <item
-        android:id="@+id/showAll"
-        android:checkable="true"
-        android:checked="true"
-        android:title="@string/show_all" />
-    <item
-        android:id="@+id/removeFinished"
-        android:title="Remove Finished" />
 
 </menu>
