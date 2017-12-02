@@ -114,10 +114,14 @@ public class EditTask extends AppCompatActivity {
         done.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mDb.update(TodoDBHelper.TABLE_NAME,mCv, TodotaskContract.TodoEntry._ID+"="+mId,null);
+                mName = editText.getText().toString();
+                mCv.put(TodotaskContract.TodoEntry.NAME, mName);
+                mDb.update(TodoDBHelper.TABLE_NAME, mCv, TodotaskContract.TodoEntry._ID+"="+mId,null);
                 finish();
             }
         });
+
+
 
 
         // show keyboard
@@ -143,6 +147,5 @@ public class EditTask extends AppCompatActivity {
     public void setText(String text) {
         editText.setText(text);
         mName = text;
-        mCv.put(TodotaskContract.TodoEntry.NAME, mName);
     }
 }
