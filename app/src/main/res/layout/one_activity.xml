@@ -9,8 +9,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignTop="@+id/finishedCheckBox"
-        android:layout_centerInParent="false"
+        android:layout_centerInParent="true"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
         android:layout_toLeftOf="@+id/deadlineDate"
         android:text="sample text" />
 
@@ -19,20 +21,11 @@
         android:id="@+id/deadlineDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="false"
-        android:layout_alignTop="@+id/finishedCheckBox"
-        android:layout_toLeftOf="@+id/finishedCheckBox"
-        android:text="second" />
-
-    <CheckBox
-        android:id="@+id/finishedCheckBox"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
-        android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="8dp"
+        android:text="second" />
 
 
 </RelativeLayout>

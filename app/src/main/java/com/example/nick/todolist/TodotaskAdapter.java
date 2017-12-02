@@ -65,75 +65,16 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
 
         String name = mCursor.getString(mCursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
         long deadline = mCursor.getLong(mCursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
-        final int completion = mCursor.getInt(mCursor.getColumnIndex(TodotaskContract.TodoEntry.COMPLETION));
         final int id = mCursor.getInt(mCursor.getColumnIndex(TodotaskContract.TodoEntry._ID));
 
         final ContentValues cv = new ContentValues();
         cv.put(TodotaskContract.TodoEntry.NAME, name);
         cv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, deadline);
-        cv.put(TodotaskContract.TodoEntry.COMPLETION, completion);
         cv.put(TodotaskContract.TodoEntry._ID, id);
 
         holder.mNameTextView.setText(name);
-        holder.mFinishedCheckBox.setChecked(completion == MAX_COMPLETION_POINTS);
-        if (completion != MAX_COMPLETION_POINTS)
-        {
-            holder.mDeadlineTextView.setText(timeLeft(deadline));
-        }
-        else {
-            holder.mDeadlineTextView.setText("");
-        }
+        holder.mDeadlineTextView.setText(timeLeft(deadline));
 
-
-        holder.mNameTextView.setOnClickListener(new View.OnClickListener() {
-            int lCompletion = completion;
-            ContentValues lCv = cv;
-
-            @Override
-            public void onClick(View v) {
-                if (lCompletion == MAX_COMPLETION_POINTS)
-                    return;
-
-                lCompletion++;
-                if (lCompletion == MAX_COMPLETION_POINTS) {
-                    holder.mFinishedCheckBox.setChecked(true);
-                }
-                lCv.put(TodotaskContract.TodoEntry.COMPLETION, lCompletion);
-
-                // Updating the entry in the db
-                mDb.update(TodoDBHelper.TABLE_NAME, lCv,
-                        TodotaskContract.TodoEntry._ID+"="+lCv.getAsInteger(TodotaskContract.TodoEntry._ID), null);
-
-                holder.updateBackground(lCompletion);
-
-
-            }
-        });
-        holder.mFinishedCheckBox.setOnClickListener(new View.OnClickListener() {
-            int lCompletion = completion;
-            ContentValues lCv = cv;
-
-            @Override
-            public void onClick(View view) {
-                Log.d(TAG, "onClick: checked " + holder.mNameTextView.getText().toString());
-                lCompletion = 3;
-                if (!((CheckBox) view).isChecked()) {
-                    Log.d(TAG, "onClick: removeFromDb completion");
-
-                    lCompletion = 0;
-                }
-
-                lCv.put(TodotaskContract.TodoEntry.COMPLETION, lCompletion);
-
-                // Updating the entry in the db
-                mDb.update(TodoDBHelper.TABLE_NAME, lCv,
-                        TodotaskContract.TodoEntry._ID+"="+lCv.getAsInteger(TodotaskContract.TodoEntry._ID), null);
-
-
-                holder.updateBackground(lCompletion);
-
-            }
-        });
         holder.mNameTextView.setOnLongClickListener(new View.OnLongClickListener() {
             int tmp = 0; //todo delete, just to hide the code block
             @Override
@@ -163,7 +104,6 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
             }
         });
 
-        holder.updateBackground(completion);
 
     }
 
@@ -227,15 +167,10 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
 
             mNameTextView = itemView.findViewById(R.id.textOfTask);
             mDeadlineTextView = itemView.findViewById(R.id.deadlineDate);
-            mFinishedCheckBox = itemView.findViewById(R.id.finishedCheckBox);
             mView = itemView;
 
         }
-        void updateBackground(int completionPoints) {
-            int valueForColors = (int) (255 * ((float) completionPoints / MAX_COMPLETION_POINTS));
-            mNameTextView.setBackgroundColor(Color.rgb(255-valueForColors, 255, 255-valueForColors));
-            mNameTextView.getBackground().setAlpha(30);
-        }
+
     }
 
     private void startEditing(long mId) {
