@@ -7,4 +7,5 @@
     <string name="current_activity">Current activity</string>
     <string name="time_created">9s</string>
     <string name="done">Done</string>
+    <string name="sort_by">Sort by</string>
 </resources>

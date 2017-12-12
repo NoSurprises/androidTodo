@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
         android:id="@+id/add"
@@ -11,5 +11,9 @@
         android:checkable="false"
         android:title="@string/clear_all"
         android:visible="true" />
+    <item
+        android:id="@+id/app_bar_switch"
+        android:title="@string/sort_by"
+        app:actionLayout="@layout/switch_item" />
 
 </menu>

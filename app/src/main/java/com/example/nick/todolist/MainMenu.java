@@ -1,42 +1,36 @@
 package com.example.nick.todolist;
 
 import android.content.ContentValues;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.CheckBox;
 import android.widget.TextView;
 
 import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
 
-import java.util.Date;
-
 
 public class MainMenu extends AppCompatActivity {
 
     public static final String TAG = "daywint";
-    private static final String CHECK_SHOWALL_PREF = "show_all";
+    private static String sortByPreference;
     private RecyclerView mActivitiesRecyclerView;
     private SQLiteDatabase mDb;
-    private SQLiteOpenHelper dbHelper;
     private SharedPreferences sp;
     private TodotaskAdapter mAdapter;
-    static boolean showAllChecked;
 
+    public static String getSortingPreference() {
+        return sortByPreference;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,11 +42,12 @@ public class MainMenu extends AppCompatActivity {
 
         Log.d(TAG, "onCreate: connecting to mDb");
         // Connect to mDb
-        dbHelper = new TodoDBHelper(this);
+        SQLiteOpenHelper dbHelper = new TodoDBHelper(this);
         mDb = dbHelper.getWritableDatabase();
 
         // Get the data from shared preferences.
         sp = PreferenceManager.getDefaultSharedPreferences(this);
+        sortByPreference = sp.getString(TodoDBHelper.SORT_COLUMN, TodotaskContract.TodoEntry.DATE_CREATED);
 
         // Get the cursor from database.
         Cursor cursor = getAllTasks();
@@ -64,33 +59,23 @@ public class MainMenu extends AppCompatActivity {
         mActivitiesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         updateCountTodos();
-        
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(TAG, "onStart: ");
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume: ");
         mAdapter.swapCursor(getAllTasks());
 
     }
 
     private void updateCountTodos() {
-        // TODO make counter
-        int countFinished = 0;
-
-        ((TextView) findViewById(R.id.todos_count)).setText("Finished " + countFinished +"/"+mAdapter.getItemCount());
+        ((TextView) findViewById(R.id.todos_count)).setText("Tasks " + mAdapter.getItemCount());
     }
 
     private Cursor getAllTasks() {
         // TODO make asynktaskLoader
-        return mDb.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null, null);
+        return mDb.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null, sortByPreference);
     }
 
     @Override
@@ -111,7 +96,7 @@ public class MainMenu extends AppCompatActivity {
 
                 // TODO add value to the mDb
                 ContentValues cv = new ContentValues();
-                cv.put(TodotaskContract.TodoEntry.NAME, "New task.." );
+                cv.put(TodotaskContract.TodoEntry.NAME, "New task..");
 
                 long id = mDb.insert(TodoDBHelper.TABLE_NAME, null, cv);
                 Log.d(TAG, "onOptionsItemSelected: inserted id " + id);
@@ -122,7 +107,12 @@ public class MainMenu extends AppCompatActivity {
             case R.id.clear: {
                 mActivitiesRecyclerView.removeAllViews();
                 mDb.delete(TodoDBHelper.TABLE_NAME, null, null);
-                mAdapter.swapCursor();
+                mAdapter.swapCursor(getAllTasks());
+                break;
+            }
+            case R.id.app_bar_switch: {
+                // TODO: 12/12/2017 add sort menu item
+                sp.edit().putString(TodoDBHelper.SORT_COLUMN, TodotaskContract.TodoEntry.DATE_DEADLINE).apply();
                 break;
             }
 

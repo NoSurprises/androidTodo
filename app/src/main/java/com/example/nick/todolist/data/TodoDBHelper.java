@@ -5,19 +5,18 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import com.example.nick.todolist.data.TodotaskContract;
-
 import static com.example.nick.todolist.MainMenu.TAG;
 
 /**
- * Created by Nick on 11/20/2017.
+ * Created by Nick on 11/20/2017. Database helper creates new databases and upgrades its structure
+ * if needed
  */
 
 public class TodoDBHelper extends SQLiteOpenHelper {
 
-    public static final String DATABASE_NAME = "todolist.db";
-    public static String TABLE_NAME = "todolist";
-    public static int DATABASE_VERSION = 8;
+    public static final String TABLE_NAME = "todolist";
+    public static final String SORT_COLUMN = "sort column";
+    private static int DATABASE_VERSION = 8;
 
 
     public TodoDBHelper(Context context) {
@@ -33,6 +32,7 @@ public class TodoDBHelper extends SQLiteOpenHelper {
                 TodotaskContract.TodoEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 TodotaskContract.TodoEntry.NAME + " TEXT NOT NULL," +
                 TodotaskContract.TodoEntry.DATE_CREATED + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                // TODO: 12/12/2017 default current stamp doesn't work properly
                 TodotaskContract.TodoEntry.DATE_DEADLINE + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP" + ");";
 
         sqLiteDatabase.execSQL(createDBquery);

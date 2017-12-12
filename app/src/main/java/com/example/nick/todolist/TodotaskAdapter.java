@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -13,9 +12,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
@@ -30,18 +27,19 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.nick.todolist.MainMenu.TAG;
+import static com.example.nick.todolist.MainMenu.getSortingPreference;
 
 /**
- * Created by Nick on 11/25/2017.
+ * Created by Nick on 11/25/2017. adapter class of the recycler view. Binds information
+ * with view holders
  */
 
-public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewholder> {
+class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewholder> {
     private final Context mContext;
     private Cursor mCursor;
     private SQLiteDatabase mDb;
-    public static final int MAX_COMPLETION_POINTS = 3;
 
-    public TodotaskAdapter(Context context, Cursor cursor, SQLiteDatabase mDb) {
+    TodotaskAdapter(Context context, Cursor cursor, SQLiteDatabase mDb) {
         this.mContext = context;
         this.mCursor = cursor;
         this.mDb = mDb;
@@ -91,7 +89,7 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
      * @param deadline the end point of the time interval
      * @return String representation of the time left
      */
-    String timeLeft(long deadline) {
+    private String timeLeft(long deadline) {
         Date now = new Date();
         long difference = deadline - now.getTime();
 
@@ -125,7 +123,7 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
     }
 
 
-    public void swapCursor(Cursor cursor) {
+    void swapCursor(Cursor cursor) {
         if (mCursor != null) {
             mCursor.close();
         }
@@ -133,20 +131,27 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
         this.notifyDataSetChanged();
     }
 
-    public void swapCursor() {
-        Cursor newCursor = mDb.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null, null);
+    private void swapCursor() {
+        Cursor newCursor = mDb.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null, getSortingPreference());
         swapCursor(newCursor);
         this.notifyDataSetChanged();
     }
 
+    void startEditing(long mId) {
+        Intent intent = new Intent(mContext, EditTask.class);
+        intent.putExtra(TodotaskContract.TodoEntry._ID, mId);
 
-    public class TodotaskViewholder extends RecyclerView.ViewHolder {
+        mContext.startActivity(intent);
+
+    }
+
+    class TodotaskViewholder extends RecyclerView.ViewHolder {
 
         TextView mNameTextView;
         TextView mDeadlineTextView;
 
 
-        public TodotaskViewholder(final View itemView) {
+        TodotaskViewholder(final View itemView) {
             super(itemView);
 
             mNameTextView = itemView.findViewById(R.id.textOfTask);
@@ -154,7 +159,6 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
 
 
             mNameTextView.setOnLongClickListener(new View.OnLongClickListener() {
-                int tmp = 0; //todo delete, just to hide the code block
 
                 @Override
                 public boolean onLongClick(View view) {
@@ -171,7 +175,6 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
                                     break;
                                 }
                                 case R.id.remove: {
-
                                     removeItem(((int) itemView.getTag()));
                                     break;
                                 }
@@ -183,15 +186,6 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
                 }
             });
         }
-    }
-
-
-    public void startEditing(long mId) {
-        Intent intent = new Intent(mContext, EditTask.class);
-        intent.putExtra(TodotaskContract.TodoEntry._ID, mId);
-
-        mContext.startActivity(intent);
-
     }
 
 

@@ -6,9 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -24,11 +24,6 @@ import java.util.Date;
 
 public class EditTask extends AppCompatActivity {
 
-    public static final int EDITING_FINISHED = 1111;
-    public static final int EDITING_INTERRUPTED = 11111;
-    public static final String NAME_FIELD = "mName";
-    public static final String ID_FIELD = "id";
-    public static final String DATE_FIELD = "date";
     private static final String TAG = "daywint";
 
 
@@ -37,7 +32,6 @@ public class EditTask extends AppCompatActivity {
     Button done;
     CalendarView cal;
     Calendar deadlineDate;
-    private TodoDBHelper dbHelper;
     private SQLiteDatabase mDb;
     private String mName;
     private ContentValues mCv;
@@ -47,7 +41,6 @@ public class EditTask extends AppCompatActivity {
 
     @Override
     public boolean onSupportNavigateUp() {
-        setResult(EDITING_INTERRUPTED);
         finish();
         return true;
     }
@@ -62,7 +55,7 @@ public class EditTask extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        dbHelper = new TodoDBHelper(this);
+        TodoDBHelper dbHelper = new TodoDBHelper(this);
         mDb = dbHelper.getWritableDatabase();
 
         // getting the data
@@ -77,7 +70,8 @@ public class EditTask extends AppCompatActivity {
         deadlineDate = Calendar.getInstance();
 
 
-        Cursor cursor = mDb.query(false, TodoDBHelper.TABLE_NAME, null, TodotaskContract.TodoEntry._ID+"="+ mId, null,null,null,null,null);
+        Cursor cursor = mDb.query(false, TodoDBHelper.TABLE_NAME, null,
+                TodotaskContract.TodoEntry._ID + "=" + mId, null, null, null, null, null);
 
         Log.d(TAG, "onCreate: found " + cursor);
         Log.d(TAG, "onCreate: size " + cursor.getCount() +" with id " + mId );
@@ -85,11 +79,14 @@ public class EditTask extends AppCompatActivity {
         cursor.moveToFirst();
         mName = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
         mDeadline = cursor.getLong(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
+        cursor.close();
+
 
         deadlineDate.setTime(new Date(mDeadline));
         deadlineDate.set(Calendar.HOUR_OF_DAY, 23);
         deadlineDate.set(Calendar.MINUTE, 59);
         deadlineDate.set(Calendar.SECOND, 0);
+        cal.setDate(deadlineDate.getTime().getTime());
 
         mCv = new ContentValues();
         mCv.put(TodotaskContract.TodoEntry.NAME, mName);

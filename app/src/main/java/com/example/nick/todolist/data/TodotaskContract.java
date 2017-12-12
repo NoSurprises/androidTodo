@@ -3,7 +3,7 @@ package com.example.nick.todolist.data;
 import android.provider.BaseColumns;
 
 /**
- * Created by Nick on 11/20/2017.
+ * Created by Nick on 11/20/2017. Database contract. Contains names of the columns
  */
 
 public class TodotaskContract {
