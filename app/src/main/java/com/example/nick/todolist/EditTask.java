@@ -41,7 +41,6 @@ public class EditTask extends AppCompatActivity {
     private SQLiteDatabase mDb;
     private String mName;
     private ContentValues mCv;
-    private int mCompletion;
     private long mDeadline;
     private long mId;
 
@@ -85,7 +84,6 @@ public class EditTask extends AppCompatActivity {
 
         cursor.moveToFirst();
         mName = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
-        mCompletion = cursor.getInt(cursor.getColumnIndex(TodotaskContract.TodoEntry.COMPLETION));
         mDeadline = cursor.getLong(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
 
         deadlineDate.setTime(new Date(mDeadline));
@@ -95,7 +93,6 @@ public class EditTask extends AppCompatActivity {
 
         mCv = new ContentValues();
         mCv.put(TodotaskContract.TodoEntry.NAME, mName);
-        mCv.put(TodotaskContract.TodoEntry.COMPLETION, mCompletion);
         mCv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, mDeadline);
         mCv.put(TodotaskContract.TodoEntry._ID, mId);
         setText(mName);
@@ -142,6 +139,7 @@ public class EditTask extends AppCompatActivity {
             im.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
         super.finish();
+
     }
 
     public void setText(String text) {

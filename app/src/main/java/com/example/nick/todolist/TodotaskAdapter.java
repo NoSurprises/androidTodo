@@ -75,46 +75,19 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
         holder.mNameTextView.setText(name);
         holder.mDeadlineTextView.setText(timeLeft(deadline));
 
-        holder.mNameTextView.setOnLongClickListener(new View.OnLongClickListener() {
-            int tmp = 0; //todo delete, just to hide the code block
-            @Override
-            public boolean onLongClick(View view) {
-                PopupMenu menu = new PopupMenu(mContext, holder.mNameTextView);
-                menu.inflate(R.menu.item_context_menu);
-                menu.show();
-
-                menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.edit : {
-                                startEditing(id);
-                                break;
-                            }
-                            case R.id.remove : {
-
-                                removeItem(id, position);
-                                break;
-                            }
-                        }
-                        return true;
-                    }
-                });
-                return true;
-            }
-        });
-
-
+        holder.itemView.setTag(id);
     }
 
-    private void removeItem(int id, int position) {
-        mDb.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID+"="+id, null);
-        notifyItemRemoved(position);
+
+    private void removeItem(int id) {
+        mDb.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID + "=" + id, null);
         swapCursor();
+        notifyDataSetChanged();
     }
 
     /**
      * Return the time in short format to the specified date
+     *
      * @param deadline the end point of the time interval
      * @return String representation of the time left
      */
@@ -125,14 +98,14 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
 
         List<TimeUnit> units = new ArrayList<>(EnumSet.allOf(TimeUnit.class));
         Collections.reverse(units);
-        Map<TimeUnit,Long> result = new LinkedHashMap<>();
+        Map<TimeUnit, Long> result = new LinkedHashMap<>();
         long milliesRest = difference;
-        for ( TimeUnit unit : units ) {
+        for (TimeUnit unit : units) {
             // cutting off the most valuable part of the rest millies
-            long diff = unit.convert(milliesRest,TimeUnit.MILLISECONDS);
+            long diff = unit.convert(milliesRest, TimeUnit.MILLISECONDS);
             long diffInMilliesForUnit = unit.toMillis(diff);
             milliesRest = milliesRest - diffInMilliesForUnit;
-            result.put(unit,diff);
+            result.put(unit, diff);
         }
 
 
@@ -157,33 +130,63 @@ public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.Todota
             mCursor.close();
         }
         mCursor = cursor;
+        this.notifyDataSetChanged();
     }
+
     public void swapCursor() {
         Cursor newCursor = mDb.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null, null);
         swapCursor(newCursor);
+        this.notifyDataSetChanged();
     }
 
 
-    public class TodotaskViewholder extends RecyclerView.ViewHolder  {
+    public class TodotaskViewholder extends RecyclerView.ViewHolder {
 
         TextView mNameTextView;
         TextView mDeadlineTextView;
-        CheckBox mFinishedCheckBox;
-        private View mView;
 
 
-        public TodotaskViewholder(View itemView) {
+        public TodotaskViewholder(final View itemView) {
             super(itemView);
 
             mNameTextView = itemView.findViewById(R.id.textOfTask);
             mDeadlineTextView = itemView.findViewById(R.id.deadlineDate);
-            mView = itemView;
 
+
+            mNameTextView.setOnLongClickListener(new View.OnLongClickListener() {
+                int tmp = 0; //todo delete, just to hide the code block
+
+                @Override
+                public boolean onLongClick(View view) {
+                    PopupMenu menu = new PopupMenu(mContext, mNameTextView);
+                    menu.inflate(R.menu.item_context_menu);
+                    menu.show();
+
+                    menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            switch (item.getItemId()) {
+                                case R.id.edit: {
+                                    startEditing(((int) itemView.getTag()));
+                                    break;
+                                }
+                                case R.id.remove: {
+
+                                    removeItem(((int) itemView.getTag()));
+                                    break;
+                                }
+                            }
+                            return true;
+                        }
+                    });
+                    return true;
+                }
+            });
         }
-
     }
 
-    private void startEditing(long mId) {
+
+    public void startEditing(long mId) {
         Intent intent = new Intent(mContext, EditTask.class);
         intent.putExtra(TodotaskContract.TodoEntry._ID, mId);
 

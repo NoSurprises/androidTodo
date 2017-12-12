@@ -64,12 +64,21 @@ public class MainMenu extends AppCompatActivity {
         mActivitiesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         updateCountTodos();
+        
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        Log.d(TAG, "onStart: ");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume: ");
         mAdapter.swapCursor(getAllTasks());
+
     }
 
     private void updateCountTodos() {
@@ -101,14 +110,19 @@ public class MainMenu extends AppCompatActivity {
             case R.id.add: {
 
                 // TODO add value to the mDb
-                mAdapter.swapCursor(getAllTasks());
+                ContentValues cv = new ContentValues();
+                cv.put(TodotaskContract.TodoEntry.NAME, "New task.." );
+
+                long id = mDb.insert(TodoDBHelper.TABLE_NAME, null, cv);
+                Log.d(TAG, "onOptionsItemSelected: inserted id " + id);
+                mAdapter.startEditing(id);
                 break;
             }
 
             case R.id.clear: {
                 mActivitiesRecyclerView.removeAllViews();
                 mDb.delete(TodoDBHelper.TABLE_NAME, null, null);
-
+                mAdapter.swapCursor();
                 break;
             }
 
@@ -118,28 +132,6 @@ public class MainMenu extends AppCompatActivity {
 
 
 
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (resultCode == EditTask.EDITING_FINISHED) {
-            if (data == null) {
-                return;
-            }
-
-            String taskName = data.getStringExtra(EditTask.NAME_FIELD);
-            long id = data.getLongExtra(EditTask.ID_FIELD, -1);
-            Date date = new Date(data.getLongExtra(EditTask.DATE_FIELD, new Date().getTime()));
-
-            Log.d(TAG, "onActivityResult: received " + taskName + " " + id + " " + date);
-
-            // TODO: 11/27/2017 add to mDb
-            mAdapter.swapCursor(getAllTasks());
-
-
-        }
-    }
 
 
 
