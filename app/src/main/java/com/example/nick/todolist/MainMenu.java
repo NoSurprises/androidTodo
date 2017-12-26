@@ -47,6 +47,7 @@ public class MainMenu extends AppCompatActivity {
 
         // Get the data from shared preferences.
         sp = PreferenceManager.getDefaultSharedPreferences(this);
+        // Get sorting preference.
         sortByPreference = sp.getString(TodoDBHelper.SORT_COLUMN, TodotaskContract.TodoEntry.DATE_CREATED);
 
         // Get the cursor from database.
@@ -82,8 +83,6 @@ public class MainMenu extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.menu, menu);
-
-
         return true;
     }
 
@@ -94,10 +93,8 @@ public class MainMenu extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.add: {
 
-                // TODO add value to the mDb
                 ContentValues cv = new ContentValues();
                 cv.put(TodotaskContract.TodoEntry.NAME, "New task..");
-
                 long id = mDb.insert(TodoDBHelper.TABLE_NAME, null, cv);
                 Log.d(TAG, "onOptionsItemSelected: inserted id " + id);
                 mAdapter.startEditing(id);
@@ -115,14 +112,8 @@ public class MainMenu extends AppCompatActivity {
                 sp.edit().putString(TodoDBHelper.SORT_COLUMN, TodotaskContract.TodoEntry.DATE_DEADLINE).apply();
                 break;
             }
-
         }
         return true;
     }
-
-
-
-
-
-
 }
+

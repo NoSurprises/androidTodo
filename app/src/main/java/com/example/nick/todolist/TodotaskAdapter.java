@@ -17,6 +17,8 @@ import android.widget.TextView;
 import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -38,6 +40,8 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
     private final Context mContext;
     private Cursor mCursor;
     private SQLiteDatabase mDb;
+
+    private SimpleDateFormat databaseTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     TodotaskAdapter(Context context, Cursor cursor, SQLiteDatabase mDb) {
         this.mContext = context;
@@ -62,16 +66,25 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
         }
 
         String name = mCursor.getString(mCursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
-        long deadline = mCursor.getLong(mCursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
+        String rawDeadlineDate =
+                mCursor.getString(mCursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
+
+        Date deadline = null;
+        try {
+            deadline = databaseTimeFormat.parse(rawDeadlineDate);
+        } catch (ParseException e) {
+            // Set default value - today
+            deadline = new Date();
+        }
         final int id = mCursor.getInt(mCursor.getColumnIndex(TodotaskContract.TodoEntry._ID));
 
         final ContentValues cv = new ContentValues();
         cv.put(TodotaskContract.TodoEntry.NAME, name);
-        cv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, deadline);
+        cv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, rawDeadlineDate);
         cv.put(TodotaskContract.TodoEntry._ID, id);
 
         holder.mNameTextView.setText(name);
-        holder.mDeadlineTextView.setText(timeLeft(deadline));
+        holder.mDeadlineTextView.setText(timeLeft(deadline.getTime()));
 
         holder.itemView.setTag(id);
     }

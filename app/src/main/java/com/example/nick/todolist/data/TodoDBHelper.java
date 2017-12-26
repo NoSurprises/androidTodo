@@ -16,7 +16,7 @@ public class TodoDBHelper extends SQLiteOpenHelper {
 
     public static final String TABLE_NAME = "todolist";
     public static final String SORT_COLUMN = "sort column";
-    private static int DATABASE_VERSION = 8;
+    private static int DATABASE_VERSION = 10;
 
 
     public TodoDBHelper(Context context) {
@@ -31,9 +31,8 @@ public class TodoDBHelper extends SQLiteOpenHelper {
         String createDBquery = "CREATE TABLE " + TABLE_NAME + " ("+
                 TodotaskContract.TodoEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 TodotaskContract.TodoEntry.NAME + " TEXT NOT NULL," +
-                TodotaskContract.TodoEntry.DATE_CREATED + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
-                // TODO: 12/12/2017 default current stamp doesn't work properly
-                TodotaskContract.TodoEntry.DATE_DEADLINE + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP" + ");";
+                TodotaskContract.TodoEntry.DATE_CREATED + " DATETIME DEFAULT CURRENT_TIMESTAMP," +
+                TodotaskContract.TodoEntry.DATE_DEADLINE + " DATETIME DEFAULT CURRENT_TIMESTAMP" + ");";
 
         sqLiteDatabase.execSQL(createDBquery);
     }

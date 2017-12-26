@@ -19,6 +19,8 @@ import android.widget.EditText;
 import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -35,8 +37,9 @@ public class EditTask extends AppCompatActivity {
     private SQLiteDatabase mDb;
     private String mName;
     private ContentValues mCv;
-    private long mDeadline;
+    private String mDeadline;
     private long mId;
+    private SimpleDateFormat databaseTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
     @Override
@@ -62,8 +65,6 @@ public class EditTask extends AppCompatActivity {
         Intent intent = getIntent();
         mId = intent.getLongExtra(TodotaskContract.TodoEntry._ID, -1);
 
-
-
         cal = ((CalendarView) findViewById(R.id.calendarView));
         editText = ((EditText) findViewById(R.id.editNameTask));
         done = (Button) findViewById(R.id.editingDone);
@@ -78,11 +79,16 @@ public class EditTask extends AppCompatActivity {
 
         cursor.moveToFirst();
         mName = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
-        mDeadline = cursor.getLong(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
+        mDeadline = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
+        Log.d(TAG, "onCreate: deadline from db: " + mDeadline);
         cursor.close();
 
-
-        deadlineDate.setTime(new Date(mDeadline));
+        try {
+            deadlineDate.setTime(databaseTimeFormat.parse(mDeadline));
+        } catch (ParseException e) {
+            // Set default value - today
+            deadlineDate.setTime(new Date());
+        }
         deadlineDate.set(Calendar.HOUR_OF_DAY, 23);
         deadlineDate.set(Calendar.MINUTE, 59);
         deadlineDate.set(Calendar.SECOND, 0);
@@ -90,16 +96,15 @@ public class EditTask extends AppCompatActivity {
 
         mCv = new ContentValues();
         mCv.put(TodotaskContract.TodoEntry.NAME, mName);
-        mCv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, mDeadline);
+        mCv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, databaseTimeFormat.format(deadlineDate.getTime()));
         mCv.put(TodotaskContract.TodoEntry._ID, mId);
         setText(mName);
-
 
         cal.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(@NonNull CalendarView calendarView, int i, int i1, int i2) {
                 deadlineDate.set(i, i1, i2);
-                mDeadline =deadlineDate.getTime().getTime();
+                mDeadline = databaseTimeFormat.format(deadlineDate.getTime());
                 mCv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, mDeadline);
             }
         });
@@ -129,14 +134,13 @@ public class EditTask extends AppCompatActivity {
     }
 
     @Override
-    public void finish() {
+    protected void onStop() {
         InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         View view = getCurrentFocus();
         if (view != null) {
             im.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
-        super.finish();
-
+        super.onStop();
     }
 
     public void setText(String text) {
