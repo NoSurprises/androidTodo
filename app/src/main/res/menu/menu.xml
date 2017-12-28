@@ -12,8 +12,19 @@
         android:title="@string/clear_all"
         android:visible="true" />
     <item
-        android:id="@+id/app_bar_switch"
-        android:title="@string/sort_by"
-        app:actionLayout="@layout/switch_item" />
+        android:id="@+id/menu_sort"
+        android:title="@string/sort_by">
+        <menu>
+            <item
+                android:id="@+id/submenu_date_created"
+                android:title="Date created" />
+            <item
+                android:id="@+id/submenu_data_deadline"
+                android:title="Deadline date" />
+            <item
+                android:id="@+id/submenu_alphabetical"
+                android:title="Alphabetical" />
+        </menu>
+    </item>
 
 </menu>

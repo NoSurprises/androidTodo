@@ -16,7 +16,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
@@ -25,16 +24,12 @@ import com.example.nick.todolist.data.TodotaskContract;
 public class MainMenu extends AppCompatActivity {
 
     public static final String TAG = "daywint";
-    private static String sortByPreference;
+    private String sortByPreference;
     private RecyclerView mActivitiesRecyclerView;
     private SQLiteDatabase mDb;
     private SharedPreferences sp;
     private TodotaskAdapter mAdapter;
     private SwipeRefreshLayout mRefreshLayout;
-
-    public static String getSortingPreference() {
-        return sortByPreference;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,7 +68,7 @@ public class MainMenu extends AppCompatActivity {
         Log.d(TAG, "onCreate: in mDb found " + cursor.getCount());
 
 
-        mAdapter = new TodotaskAdapter(this, cursor, mDb);
+        mAdapter = new TodotaskAdapter(this, cursor);
         mActivitiesRecyclerView.setAdapter(mAdapter);
         mActivitiesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -91,13 +86,16 @@ public class MainMenu extends AppCompatActivity {
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
                 if (direction == ItemTouchHelper.LEFT || direction == ItemTouchHelper.RIGHT) {
                     int id = (int) viewHolder.itemView.getTag();
-                    mAdapter.removeItem(id);
-                } else if (direction == ItemTouchHelper.DOWN) {
-                    Toast.makeText(MainMenu.this, "Refresh", Toast.LENGTH_SHORT).show();
+                    removeItem(id);
                 }
             }
         }).attachToRecyclerView(mActivitiesRecyclerView);
 
+    }
+
+    void removeItem(long id) {
+        mDb.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID + "=" + id, null);
+        mAdapter.swapCursor(getAllTasks());
     }
 
     @Override
@@ -113,7 +111,7 @@ public class MainMenu extends AppCompatActivity {
 
     private Cursor getAllTasks() {
         // TODO make asynktaskLoader
-        return mDb.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null, sortByPreference);
+        return mDb.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null, sortByPreference + " COLLATE NOCASE");
     }
 
     @Override
@@ -144,11 +142,26 @@ public class MainMenu extends AppCompatActivity {
                 mAdapter.swapCursor(getAllTasks());
                 break;
             }
-            case R.id.app_bar_switch: {
-                // TODO: 12/12/2017 add sort menu item
-                sp.edit().putString(TodoDBHelper.SORT_COLUMN, TodotaskContract.TodoEntry.DATE_DEADLINE).apply();
+            // TODO: 12/28/2017 refactoring 
+            case R.id.submenu_date_created: {
+                sortByPreference = TodotaskContract.TodoEntry.DATE_CREATED;
+                sp.edit().putString(TodoDBHelper.SORT_COLUMN, sortByPreference).apply();
+                mAdapter.swapCursor(getAllTasks());
                 break;
             }
+            case R.id.submenu_data_deadline: {
+                sortByPreference = TodotaskContract.TodoEntry.DATE_DEADLINE;
+                sp.edit().putString(TodoDBHelper.SORT_COLUMN, sortByPreference).apply();
+                mAdapter.swapCursor(getAllTasks());
+                break;
+            }
+            case R.id.submenu_alphabetical: {
+                sortByPreference = TodotaskContract.TodoEntry.NAME;
+                sp.edit().putString(TodoDBHelper.SORT_COLUMN, sortByPreference).apply();
+                mAdapter.swapCursor(getAllTasks());
+                break;
+            }
+
         }
         return true;
     }

@@ -4,17 +4,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
 
 import java.text.ParseException;
@@ -30,7 +26,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.example.nick.todolist.MainMenu.TAG;
-import static com.example.nick.todolist.MainMenu.getSortingPreference;
 
 /**
  * Created by Nick on 11/25/2017. adapter class of the recycler view. Binds information
@@ -40,15 +35,13 @@ import static com.example.nick.todolist.MainMenu.getSortingPreference;
 class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewholder> {
     private final Context mContext;
     private Cursor mCursor;
-    private SQLiteDatabase mDb;
 
     private SimpleDateFormat databaseTimeFormat =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
-    TodotaskAdapter(Context context, Cursor cursor, SQLiteDatabase mDb) {
+    TodotaskAdapter(Context context, Cursor cursor) {
         this.mContext = context;
         this.mCursor = cursor;
-        this.mDb = mDb;
     }
 
     @Override
@@ -92,11 +85,6 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
     }
 
 
-    void removeItem(long id) {
-        mDb.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID + "=" + id, null);
-        swapCursor();
-        notifyDataSetChanged();
-    }
 
     /**
      * Return the time in short format to the specified date
@@ -146,11 +134,6 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
         this.notifyDataSetChanged();
     }
 
-    private void swapCursor() {
-        Cursor newCursor = mDb.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null, getSortingPreference());
-        swapCursor(newCursor);
-        this.notifyDataSetChanged();
-    }
 
     void startEditing(long mId) {
         Intent intent = new Intent(mContext, EditTask.class);
@@ -177,26 +160,7 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
 
                 @Override
                 public boolean onLongClick(View view) {
-                    PopupMenu menu = new PopupMenu(mContext, mNameTextView);
-                    menu.inflate(R.menu.item_context_menu);
-                    menu.show();
-
-                    menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem item) {
-                            switch (item.getItemId()) {
-                                case R.id.edit: {
-                                    startEditing(((int) itemView.getTag()));
-                                    break;
-                                }
-                                case R.id.remove: {
-                                    removeItem(((int) itemView.getTag()));
-                                    break;
-                                }
-                            }
-                            return true;
-                        }
-                    });
+                    startEditing(((int) itemView.getTag()));
                     return true;
                 }
             });
