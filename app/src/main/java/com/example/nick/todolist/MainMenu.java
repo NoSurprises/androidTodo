@@ -7,13 +7,16 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
@@ -27,6 +30,7 @@ public class MainMenu extends AppCompatActivity {
     private SQLiteDatabase mDb;
     private SharedPreferences sp;
     private TodotaskAdapter mAdapter;
+    private SwipeRefreshLayout mRefreshLayout;
 
     public static String getSortingPreference() {
         return sortByPreference;
@@ -39,6 +43,20 @@ public class MainMenu extends AppCompatActivity {
 
         // Creating the recycler view with all tasks
         mActivitiesRecyclerView = (RecyclerView) findViewById(R.id.activities);
+        mRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_recycler_view);
+
+        // Set up refreshing
+        mRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // Loading new data
+                mAdapter.swapCursor(getAllTasks());
+                updateCountTodos();
+
+                // Cancel animation
+                mRefreshLayout.setRefreshing(false);
+            }
+        });
 
         Log.d(TAG, "onCreate: connecting to mDb");
         // Connect to mDb
@@ -60,6 +78,25 @@ public class MainMenu extends AppCompatActivity {
         mActivitiesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         updateCountTodos();
+
+
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+                0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+                if (direction == ItemTouchHelper.LEFT || direction == ItemTouchHelper.RIGHT) {
+                    int id = (int) viewHolder.itemView.getTag();
+                    mAdapter.removeItem(id);
+                } else if (direction == ItemTouchHelper.DOWN) {
+                    Toast.makeText(MainMenu.this, "Refresh", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }).attachToRecyclerView(mActivitiesRecyclerView);
 
     }
 

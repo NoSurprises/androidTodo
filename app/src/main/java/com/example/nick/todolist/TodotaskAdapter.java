@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +42,8 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
     private Cursor mCursor;
     private SQLiteDatabase mDb;
 
-    private SimpleDateFormat databaseTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private SimpleDateFormat databaseTimeFormat =
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
     TodotaskAdapter(Context context, Cursor cursor, SQLiteDatabase mDb) {
         this.mContext = context;
@@ -69,7 +71,7 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
         String rawDeadlineDate =
                 mCursor.getString(mCursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
 
-        Date deadline = null;
+        Date deadline;
         try {
             deadline = databaseTimeFormat.parse(rawDeadlineDate);
         } catch (ParseException e) {
@@ -90,7 +92,7 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
     }
 
 
-    private void removeItem(int id) {
+    void removeItem(long id) {
         mDb.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID + "=" + id, null);
         swapCursor();
         notifyDataSetChanged();

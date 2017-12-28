@@ -23,6 +23,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 public class EditTask extends AppCompatActivity {
 
@@ -39,7 +40,8 @@ public class EditTask extends AppCompatActivity {
     private ContentValues mCv;
     private String mDeadline;
     private long mId;
-    private SimpleDateFormat databaseTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private SimpleDateFormat databaseTimeFormat =
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
 
     @Override
