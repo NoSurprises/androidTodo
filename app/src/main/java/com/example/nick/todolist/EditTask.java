@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -28,18 +27,15 @@ import java.util.Locale;
 public class EditTask extends AppCompatActivity {
 
     private static final String TAG = "daywint";
-
-
-
-    EditText editText;
-    Button done;
-    CalendarView cal;
-    Calendar deadlineDate;
+    private EditText taskText;
+    private Button done;
+    private CalendarView cal;
+    private Calendar deadlineDate;
     private SQLiteDatabase mDb;
-    private String mName;
-    private ContentValues mCv;
-    private String mDeadline;
-    private long mId;
+    private String taskName;
+    private ContentValues contentValues;
+    private String deadline;
+    private long id;
     private SimpleDateFormat databaseTimeFormat =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
@@ -55,84 +51,19 @@ public class EditTask extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_task);
 
-        ActionBar actionBar = getActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
+        displayHomeButton();
+        connectToDatabase();
 
-        TodoDBHelper dbHelper = new TodoDBHelper(this);
-        mDb = dbHelper.getWritableDatabase();
+        getDataFromIntent();
+        bindDataToViews();
 
-        // getting the data
-        Intent intent = getIntent();
-        mId = intent.getLongExtra(TodotaskContract.TodoEntry._ID, -1);
+        // Content values will help to store changed data to database
+        setUpContentValues();
 
-        cal = ((CalendarView) findViewById(R.id.calendarView));
-        editText = ((EditText) findViewById(R.id.editNameTask));
-        done = (Button) findViewById(R.id.editingDone);
-        deadlineDate = Calendar.getInstance();
+        setCalendarChangeListener();
+        setDoneClickListener();
 
-
-        Cursor cursor = mDb.query(false, TodoDBHelper.TABLE_NAME, null,
-                TodotaskContract.TodoEntry._ID + "=" + mId, null, null, null, null, null);
-
-        Log.d(TAG, "onCreate: found " + cursor);
-        Log.d(TAG, "onCreate: size " + cursor.getCount() +" with id " + mId );
-
-        cursor.moveToFirst();
-        mName = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
-        mDeadline = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
-        Log.d(TAG, "onCreate: deadline from db: " + mDeadline);
-        cursor.close();
-
-        try {
-            deadlineDate.setTime(databaseTimeFormat.parse(mDeadline));
-        } catch (ParseException e) {
-            // Set default value - today
-            deadlineDate.setTime(new Date());
-        }
-        deadlineDate.set(Calendar.HOUR_OF_DAY, 23);
-        deadlineDate.set(Calendar.MINUTE, 59);
-        deadlineDate.set(Calendar.SECOND, 0);
-        cal.setDate(deadlineDate.getTime().getTime());
-
-        mCv = new ContentValues();
-        mCv.put(TodotaskContract.TodoEntry.NAME, mName);
-        mCv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, databaseTimeFormat.format(deadlineDate.getTime()));
-        mCv.put(TodotaskContract.TodoEntry._ID, mId);
-        setText(mName);
-
-        cal.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
-            @Override
-            public void onSelectedDayChange(@NonNull CalendarView calendarView, int i, int i1, int i2) {
-                deadlineDate.set(i, i1, i2);
-                mDeadline = databaseTimeFormat.format(deadlineDate.getTime());
-                mCv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, mDeadline);
-            }
-        });
-
-
-        done.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mName = editText.getText().toString();
-                mCv.put(TodotaskContract.TodoEntry.NAME, mName);
-                mDb.update(TodoDBHelper.TABLE_NAME, mCv, TodotaskContract.TodoEntry._ID+"="+mId,null);
-                finish();
-            }
-        });
-
-
-
-
-        // show keyboard
-        editText.requestFocus();
-        InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-        im.toggleSoftInput(InputMethodManager.SHOW_FORCED,  InputMethodManager.HIDE_IMPLICIT_ONLY);
-        editText.selectAll();
-
-
-
+        showKeyboard();
     }
 
     @Override
@@ -145,8 +76,122 @@ public class EditTask extends AppCompatActivity {
         super.onStop();
     }
 
-    public void setText(String text) {
-        editText.setText(text);
-        mName = text;
+    private void setDoneClickListener() {
+        done.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                taskName = taskText.getText().toString();
+                contentValues.put(TodotaskContract.TodoEntry.NAME, taskName);
+                updateTaskInDatabase();
+                finish();
+            }
+        });
+    }
+
+    private void setCalendarChangeListener() {
+        cal.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+            @Override
+            public void onSelectedDayChange(@NonNull CalendarView calendarView, int i, int i1, int i2) {
+                deadlineDate.set(i, i1, i2);
+                deadline = databaseTimeFormat.format(deadlineDate.getTime());
+                contentValues.put(TodotaskContract.TodoEntry.DATE_DEADLINE, deadline);
+            }
+        });
+    }
+
+    private void getDataFromIntent() {
+        Intent intent = getIntent();
+
+        id = intent.getLongExtra(TodotaskContract.TodoEntry._ID, -1);
+        cal = ((CalendarView) findViewById(R.id.calendarView));
+        taskText = ((EditText) findViewById(R.id.editNameTask));
+        done = (Button) findViewById(R.id.editingDone);
+        deadlineDate = Calendar.getInstance();
+    }
+
+    private void bindDataToViews() {
+        setTasknameAndDeadline();
+        bindTaskNameToView();
+
+        parseDeadline();
+        removeTimestampFromDeadline();
+        setUpCalendarData();
+    }
+
+    private void setUpContentValues() {
+        createContentValues();
+        addNameDeadlineIdToContentValues();
+    }
+
+    private void addNameDeadlineIdToContentValues() {
+        contentValues.put(TodotaskContract.TodoEntry.NAME, taskName);
+        contentValues.put(TodotaskContract.TodoEntry.DATE_DEADLINE, databaseTimeFormat.format(deadlineDate.getTime()));
+        contentValues.put(TodotaskContract.TodoEntry._ID, id);
+    }
+
+    private void setUpCalendarData() {
+        cal.setDate(deadlineDate.getTime().getTime());
+    }
+
+    private void parseDeadline() {
+        try {
+            deadlineDate.setTime(databaseTimeFormat.parse(deadline));
+        } catch (ParseException e) {
+            // Set default value - today
+            deadlineDate.setTime(new Date());
+        }
+    }
+
+    private void removeTimestampFromDeadline() {
+        deadlineDate.set(Calendar.HOUR_OF_DAY, 23);
+        deadlineDate.set(Calendar.MINUTE, 59);
+        deadlineDate.set(Calendar.SECOND, 0);
+    }
+
+    private void setTasknameAndDeadline() {
+        Cursor cursor = getTaskToEditFromDatabase();
+        cursor.moveToFirst();
+
+        taskName = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
+        deadline = cursor.getString(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
+
+        cursor.close();
+    }
+
+    private void updateTaskInDatabase() {
+        mDb.update(TodoDBHelper.TABLE_NAME, contentValues, TodotaskContract.TodoEntry._ID + "=" + id, null);
+    }
+
+    private void bindTaskNameToView() {
+        taskText.setText(taskName);
+
+    }
+
+    private void connectToDatabase() {
+        TodoDBHelper dbHelper = new TodoDBHelper(this);
+        mDb = dbHelper.getWritableDatabase();
+    }
+
+    private Cursor getTaskToEditFromDatabase() {
+        return mDb.query(false, TodoDBHelper.TABLE_NAME, null,
+                TodotaskContract.TodoEntry._ID + "=" + id, null, null, null, null, null);
+    }
+
+    private void displayHomeButton() {
+        ActionBar actionBar = getActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    private void showKeyboard() {
+        taskText.requestFocus();
+        InputMethodManager im = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        im.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+        taskText.selectAll();
+    }
+
+    private void createContentValues() {
+        contentValues = new ContentValues();
     }
 }

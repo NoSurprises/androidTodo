@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -33,20 +34,19 @@ import static com.example.nick.todolist.MainMenu.TAG;
  */
 
 class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewholder> {
-    private final Context mContext;
-    private Cursor mCursor;
-
+    private final Context context;
+    private Cursor cursor;
     private SimpleDateFormat databaseTimeFormat =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
     TodotaskAdapter(Context context, Cursor cursor) {
-        this.mContext = context;
-        this.mCursor = cursor;
+        this.context = context;
+        this.cursor = cursor;
     }
 
     @Override
     public TodotaskViewholder onCreateViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater inflater = LayoutInflater.from(mContext);
+        LayoutInflater inflater = LayoutInflater.from(context);
         View view = inflater.inflate(R.layout.one_activity, parent, false);
         return new TodotaskViewholder(view);
     }
@@ -55,33 +55,78 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
     public void onBindViewHolder(final TodotaskViewholder holder, final int position) {
 
         Log.d(TAG, "onBindViewHolder: ");
-        if (!mCursor.moveToPosition(position)) {
+        if (!cursor.moveToPosition(position)) {
             // No such position at db
             return;
         }
 
-        String name = mCursor.getString(mCursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
-        String rawDeadlineDate =
-                mCursor.getString(mCursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
+        String name = getName();
+        Date deadline = getDeadline();
+        final int id = getId();
 
+        createAndSetUpContentValues(name, id);
+
+        setNameDeadlineToHolder(holder, name, deadline);
+        setTagWithIdToHolder(holder, id);
+    }
+
+    void setNameDeadlineToHolder(TodotaskViewholder holder, String name, Date deadline) {
+        holder.nameText.setText(name);
+        holder.deadlineText.setText(timeLeft(deadline.getTime()));
+    }
+
+    void setTagWithIdToHolder(TodotaskViewholder holder, int id) {
+        holder.itemView.setTag(id);
+    }
+
+    private void createAndSetUpContentValues(String name, int id) {
+        final ContentValues cv = createContentValues();
+        setUpContentValues(name, id, cv);
+    }
+
+    private void setUpContentValues(String name, int id, ContentValues cv) {
+        cv.put(TodotaskContract.TodoEntry.NAME, name);
+        cv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, getRawDeadline());
+        cv.put(TodotaskContract.TodoEntry._ID, id);
+    }
+
+    @NonNull
+    private ContentValues createContentValues() {
+        return new ContentValues();
+    }
+
+    private int getId() {
+        return cursor.getInt(cursor.getColumnIndex(TodotaskContract.TodoEntry._ID));
+    }
+
+    private Date parseDeadline(String rawDeadlineDate) {
         Date deadline;
+
         try {
             deadline = databaseTimeFormat.parse(rawDeadlineDate);
         } catch (ParseException e) {
             // Set default value - today
             deadline = new Date();
         }
-        final int id = mCursor.getInt(mCursor.getColumnIndex(TodotaskContract.TodoEntry._ID));
+        return deadline;
+    }
 
-        final ContentValues cv = new ContentValues();
-        cv.put(TodotaskContract.TodoEntry.NAME, name);
-        cv.put(TodotaskContract.TodoEntry.DATE_DEADLINE, rawDeadlineDate);
-        cv.put(TodotaskContract.TodoEntry._ID, id);
+    private Date getDeadline() {
 
-        holder.mNameTextView.setText(name);
-        holder.mDeadlineTextView.setText(timeLeft(deadline.getTime()));
+        String rawDeadlineDate = getRawDeadline();
+        return parseDeadline(rawDeadlineDate);
+    }
 
-        holder.itemView.setTag(id);
+    private String getRawDeadline() {
+        return getColumn(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
+    }
+
+    private String getName() {
+        return getColumn(cursor.getColumnIndex(TodotaskContract.TodoEntry.NAME));
+    }
+
+    private String getColumn(int columnIndex) {
+        return cursor.getString(columnIndex);
     }
 
 
@@ -122,41 +167,41 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
 
     @Override
     public int getItemCount() {
-        return mCursor.getCount();
+        return cursor.getCount();
     }
 
 
     void swapCursor(Cursor cursor) {
-        if (mCursor != null) {
-            mCursor.close();
+        if (this.cursor != null) {
+            this.cursor.close();
         }
-        mCursor = cursor;
+        this.cursor = cursor;
         this.notifyDataSetChanged();
     }
 
 
     void startEditing(long mId) {
-        Intent intent = new Intent(mContext, EditTask.class);
+        Intent intent = new Intent(context, EditTask.class);
         intent.putExtra(TodotaskContract.TodoEntry._ID, mId);
 
-        mContext.startActivity(intent);
+        context.startActivity(intent);
 
     }
 
     class TodotaskViewholder extends RecyclerView.ViewHolder {
 
-        TextView mNameTextView;
-        TextView mDeadlineTextView;
+        TextView nameText;
+        TextView deadlineText;
 
 
         TodotaskViewholder(final View itemView) {
             super(itemView);
 
-            mNameTextView = itemView.findViewById(R.id.textOfTask);
-            mDeadlineTextView = itemView.findViewById(R.id.deadlineDate);
+            nameText = itemView.findViewById(R.id.textOfTask);
+            deadlineText = itemView.findViewById(R.id.deadlineDate);
 
 
-            mNameTextView.setOnLongClickListener(new View.OnLongClickListener() {
+            nameText.setOnLongClickListener(new View.OnLongClickListener() {
 
                 @Override
                 public boolean onLongClick(View view) {
