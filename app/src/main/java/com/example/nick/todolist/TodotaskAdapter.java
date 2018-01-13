@@ -61,6 +61,7 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
         }
 
         String name = getName();
+        name = getStringAsTitle(name);
         Date deadline = getDeadline();
         final int id = getId();
 
@@ -68,6 +69,24 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
 
         setNameDeadlineToHolder(holder, name, deadline);
         setTagWithIdToHolder(holder, id);
+    }
+
+    @NonNull
+    private String getStringAsTitle(String name) {
+        String[] words = name.split(" ");
+        StringBuilder sb = new StringBuilder(words.length);
+        for (String word : words) {
+            sb.append(getWordAsTitle(word) + " ");
+        }
+        return sb.toString();
+
+    }
+
+    private String getWordAsTitle(String word) {
+        if (word.length() > 0) {
+            word = word.substring(0, 1).toUpperCase() + word.substring(1);
+        }
+        return word;
     }
 
     void setNameDeadlineToHolder(TodotaskViewholder holder, String name, Date deadline) {

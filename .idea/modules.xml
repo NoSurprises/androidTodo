@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/TODOlist.iml" filepath="$PROJECT_DIR$/TODOlist.iml" />
+      <module fileurl="file://$PROJECT_DIR$/androidTodo.iml" filepath="$PROJECT_DIR$/androidTodo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
