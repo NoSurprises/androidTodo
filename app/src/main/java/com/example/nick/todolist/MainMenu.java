@@ -29,6 +29,7 @@ public class MainMenu extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private TodotaskAdapter todotaskAdapter;
     private SwipeRefreshLayout refreshLayout;
+    private TextView todosCountView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +39,8 @@ public class MainMenu extends AppCompatActivity {
         // Creating the recycler view with all tasks
         allTasksRecyclerView = (RecyclerView) findViewById(R.id.activities);
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_recycler_view);
+
+        todosCountView = ((TextView) findViewById(R.id.todos_count));
 
         setUpRefreshingGesture();
         connectToDb();
@@ -103,6 +106,7 @@ public class MainMenu extends AppCompatActivity {
     void removeItem(long id) {
         db.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID + "=" + id, null);
         refreshAdapterDataset();
+        updateCountTodos();
     }
 
     private void connectToDb() {
@@ -172,7 +176,7 @@ public class MainMenu extends AppCompatActivity {
     }
 
     private void updateCountTodos() {
-        ((TextView) findViewById(R.id.todos_count)).setText("Tasks " + todotaskAdapter.getItemCount());
+        todosCountView.setText("Tasks " + todotaskAdapter.getItemCount());
     }
 
     private void removeAllTasks() {
