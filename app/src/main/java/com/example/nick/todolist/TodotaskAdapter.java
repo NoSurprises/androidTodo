@@ -1,16 +1,21 @@
 package com.example.nick.todolist;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.nick.todolist.data.TodotaskContract;
 
@@ -207,6 +212,12 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
 
     }
 
+    private void copyToClipboard(String label, String text) {
+        ClipboardManager clipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText(label, text);
+        clipboardManager.setPrimaryClip(clip);
+    }
+
     class TodotaskViewholder extends RecyclerView.ViewHolder {
 
         TextView nameText;
@@ -223,8 +234,27 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
             nameText.setOnLongClickListener(new View.OnLongClickListener() {
 
                 @Override
-                public boolean onLongClick(View view) {
-                    startEditing(((int) itemView.getTag()));
+                public boolean onLongClick(final View view) {
+                    PopupMenu options = new PopupMenu(view.getContext(), view);
+                    options.inflate(R.menu.task_options_menu);
+                    options.show();
+
+                    options.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            switch (item.getItemId()) {
+                                case R.id.options_edit:
+                                    startEditing(((int) itemView.getTag()));
+                                    return true;
+                                case R.id.options_copy_text:
+                                    copyToClipboard("Text of todo task", nameText.getText().toString());
+                                    Toast.makeText(view.getContext(), "Copied: " + nameText.getText(), Toast.LENGTH_SHORT).show();
+                                    return true;
+                            }
+                            return false;
+                        }
+                    });
+
                     return true;
                 }
             });
