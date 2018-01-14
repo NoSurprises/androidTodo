@@ -14,6 +14,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.TextView;
 
 import com.example.nick.todolist.data.TodoDBHelper;
@@ -30,6 +31,7 @@ public class MainMenu extends AppCompatActivity {
     private TodotaskAdapter todotaskAdapter;
     private SwipeRefreshLayout refreshLayout;
     private TextView todosCountView;
+    private TextView emptyMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +43,7 @@ public class MainMenu extends AppCompatActivity {
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_recycler_view);
 
         todosCountView = ((TextView) findViewById(R.id.todos_count));
+        emptyMessage = (TextView) findViewById(R.id.empty_list_message);
 
         setUpRefreshingGesture();
         connectToDb();
@@ -52,12 +55,26 @@ public class MainMenu extends AppCompatActivity {
 
         addSwipeGesturesToRecyclerView();
 
+
+    }
+
+    private void showEmptyMessage() {
+        allTasksRecyclerView.setVisibility(View.GONE);
+        todosCountView.setVisibility(View.GONE);
+        emptyMessage.setVisibility(View.VISIBLE);
+    }
+
+    private void hideEmptyMessage() {
+        allTasksRecyclerView.setVisibility(View.VISIBLE);
+        todosCountView.setVisibility(View.VISIBLE);
+        emptyMessage.setVisibility(View.GONE);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         refreshAdapterDataset();
+        updateCountTodos();
     }
 
     @Override
@@ -107,6 +124,7 @@ public class MainMenu extends AppCompatActivity {
         db.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID + "=" + id, null);
         refreshAdapterDataset();
         updateCountTodos();
+
     }
 
     private void connectToDb() {
@@ -176,7 +194,16 @@ public class MainMenu extends AppCompatActivity {
     }
 
     private void updateCountTodos() {
+        manageEmptyMessage();
         todosCountView.setText("Tasks " + todotaskAdapter.getItemCount());
+    }
+
+    private void manageEmptyMessage() {
+        if (todotaskAdapter.getItemCount() == 0) {
+            showEmptyMessage();
+        } else if (allTasksRecyclerView.getVisibility() == View.GONE) {
+            hideEmptyMessage();
+        }
     }
 
     private void removeAllTasks() {
@@ -188,6 +215,8 @@ public class MainMenu extends AppCompatActivity {
     private long addNewTask() {
         ContentValues cv = new ContentValues();
         cv.put(TodotaskContract.TodoEntry.NAME, "New task..");
+        updateCountTodos();
+
 
         return db.insert(TodoDBHelper.TABLE_NAME, null, cv);
     }

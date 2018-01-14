@@ -201,6 +201,8 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
         }
         this.cursor = cursor;
         this.notifyDataSetChanged();
+
+
     }
 
 
