@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
 
 import java.text.ParseException;
@@ -31,18 +32,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.example.nick.todolist.MainMenu.TAG;
+import static com.example.nick.todolist.MainActivity.TAG;
 
-/**
- * Created by Nick on 11/25/2017. adapter class of the recycler view. Binds information
- * with view holders
- */
 
 class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewholder> {
     private final Context context;
     private Cursor cursor;
-    private SimpleDateFormat databaseTimeFormat =
-            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
     TodotaskAdapter(Context context, Cursor cursor) {
         this.context = context;
@@ -67,7 +62,7 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
 
         String name = getName();
         name = getStringAsTitle(name);
-        Date deadline = getDeadline();
+        Date deadline = TodoDBHelper.getDeadline(cursor);
         final int id = getId();
 
         createAndSetUpContentValues(name, id);
@@ -123,23 +118,6 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
         return cursor.getInt(cursor.getColumnIndex(TodotaskContract.TodoEntry._ID));
     }
 
-    private Date parseDeadline(String rawDeadlineDate) {
-        Date deadline;
-
-        try {
-            deadline = databaseTimeFormat.parse(rawDeadlineDate);
-        } catch (ParseException e) {
-            // Set default value - today
-            deadline = new Date();
-        }
-        return deadline;
-    }
-
-    private Date getDeadline() {
-
-        String rawDeadlineDate = getRawDeadline();
-        return parseDeadline(rawDeadlineDate);
-    }
 
     private String getRawDeadline() {
         return getColumn(cursor.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
@@ -191,6 +169,9 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
 
     @Override
     public int getItemCount() {
+        if (cursor == null) {
+            return 0;
+        }
         return cursor.getCount();
     }
 
@@ -207,7 +188,7 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
 
 
     void startEditing(long mId) {
-        Intent intent = new Intent(context, EditTask.class);
+        Intent intent = new Intent(context, EditTaskActivity.class);
         intent.putExtra(TodotaskContract.TodoEntry._ID, mId);
 
         context.startActivity(intent);

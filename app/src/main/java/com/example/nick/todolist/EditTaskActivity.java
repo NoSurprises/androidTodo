@@ -24,9 +24,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-public class EditTask extends AppCompatActivity {
+public class EditTaskActivity extends AppCompatActivity {
 
-    private static final String TAG = "daywint";
+    private static final String TAG = "EditTask";
+
     private EditText taskText;
     private Button done;
     private CalendarView cal;

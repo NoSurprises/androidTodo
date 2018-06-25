@@ -1,11 +1,17 @@
 package com.example.nick.todolist.data;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import static com.example.nick.todolist.MainMenu.TAG;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+import static com.example.nick.todolist.MainActivity.TAG;
 
 /**
  * Created by Nick on 11/20/2017. Database helper creates new databases and upgrades its structure
@@ -18,9 +24,43 @@ public class TodoDBHelper extends SQLiteOpenHelper {
     public static final String SORT_COLUMN = "sort column";
     private static int DATABASE_VERSION = 10;
 
+    public static SimpleDateFormat DATABASE_TIME_FORMAT =
+            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+
 
     public TodoDBHelper(Context context) {
         super(context, TABLE_NAME, null, DATABASE_VERSION);
+    }
+
+    public Cursor getAllTasks(String sortByPreference) {
+        final SQLiteDatabase database = getReadableDatabase();
+        Cursor cursor = database.query(TodoDBHelper.TABLE_NAME, null, null,
+                null, null, null,
+                sortByPreference + " COLLATE NOCASE");
+
+
+        return cursor;
+    }
+
+    public static Date getDeadline(Cursor c) {
+        String rawDeadlineDate = getRawDeadline(c);
+        return parseDeadline(rawDeadlineDate);
+    }
+
+
+    private static Date parseDeadline(String rawDeadlineDate) {
+        Date deadline;
+
+        try {
+            deadline = DATABASE_TIME_FORMAT.parse(rawDeadlineDate);
+        } catch (ParseException e) {
+            // Set default value - today
+            deadline = new Date();
+        }
+        return deadline;
+    }
+    private static String getRawDeadline(Cursor c) {
+        return c.getString(c.getColumnIndex(TodotaskContract.TodoEntry.DATE_DEADLINE));
     }
 
     @Override

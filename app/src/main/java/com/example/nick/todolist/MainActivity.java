@@ -2,9 +2,7 @@ package com.example.nick.todolist;
 
 import android.content.ContentValues;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -21,17 +19,17 @@ import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
 
 
-public class MainMenu extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "daywint";
     private String sortByPreference;
     private RecyclerView allTasksRecyclerView;
-    private SQLiteDatabase db;
     private SharedPreferences sharedPreferences;
     private TodotaskAdapter todotaskAdapter;
     private SwipeRefreshLayout refreshLayout;
     private TextView todosCountView;
     private TextView emptyMessage;
+    private TodoDBHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,23 +37,25 @@ public class MainMenu extends AppCompatActivity {
         setContentView(R.layout.activity_main_menu);
 
         // Creating the recycler view with all tasks
-        allTasksRecyclerView = (RecyclerView) findViewById(R.id.activities);
-        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_recycler_view);
+        bindViews();
 
-        todosCountView = ((TextView) findViewById(R.id.todos_count));
-        emptyMessage = (TextView) findViewById(R.id.empty_list_message);
-
-        setUpRefreshingGesture();
+        setupRefreshingGesture();
         connectToDb();
-        getSharedPreferences();
-        setUpSortingPreference();
-        setUpRecyclerView();
+        initSharedPreferences();
+
+        initSortingPreference();
+        setupRecyclerView();
 
         updateCountTodos();
 
         addSwipeGesturesToRecyclerView();
+    }
 
-
+    private void bindViews() {
+        allTasksRecyclerView = (RecyclerView) findViewById(R.id.activities);
+        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_recycler_view);
+        todosCountView = ((TextView) findViewById(R.id.todos_count));
+        emptyMessage = (TextView) findViewById(R.id.empty_list_message);
     }
 
     private void showEmptyMessage() {
@@ -83,12 +83,10 @@ public class MainMenu extends AppCompatActivity {
 
         switch (item.getItemId()) {
             case R.id.add: {
-
                 long id = addNewTask();
                 todotaskAdapter.startEditing(id);
                 break;
             }
-
             case R.id.clear: {
                 removeAllTasks();
                 break;
@@ -121,19 +119,20 @@ public class MainMenu extends AppCompatActivity {
     }
 
     void removeItem(long id) {
-        db.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID + "=" + id, null);
+        final SQLiteDatabase database = dbHelper.getWritableDatabase();
+        database.delete(TodoDBHelper.TABLE_NAME, TodotaskContract.TodoEntry._ID + "=" + id, null);
+        database.close();
         refreshAdapterDataset();
         updateCountTodos();
 
     }
 
     private void connectToDb() {
-        SQLiteOpenHelper dbHelper = new TodoDBHelper(this);
-        db = dbHelper.getWritableDatabase();
+        dbHelper = new TodoDBHelper(this);
     }
 
     private void refreshAdapterDataset() {
-        todotaskAdapter.swapCursor(getAllTasks());
+        todotaskAdapter.swapCursor(dbHelper.getAllTasks(sortByPreference));
     }
 
     private void addSwipeGesturesToRecyclerView() {
@@ -154,17 +153,17 @@ public class MainMenu extends AppCompatActivity {
         }).attachToRecyclerView(allTasksRecyclerView);
     }
 
-    private void setUpRecyclerView() {
-        todotaskAdapter = new TodotaskAdapter(this, getAllTasks());
+    private void setupRecyclerView() {
+        todotaskAdapter = new TodotaskAdapter(this, dbHelper.getAllTasks(sortByPreference));
         allTasksRecyclerView.setAdapter(todotaskAdapter);
         allTasksRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
-    private void getSharedPreferences() {
+    private void initSharedPreferences() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
-    private void setUpSortingPreference() {
+    private void initSortingPreference() {
         sortByPreference = sharedPreferences.getString(TodoDBHelper.SORT_COLUMN, TodotaskContract.TodoEntry.DATE_CREATED);
     }
 
@@ -173,7 +172,7 @@ public class MainMenu extends AppCompatActivity {
         sharedPreferences.edit().putString(TodoDBHelper.SORT_COLUMN, sortByPreference).apply();
     }
 
-    private void setUpRefreshingGesture() {
+    private void setupRefreshingGesture() {
         refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 
             @Override
@@ -208,7 +207,9 @@ public class MainMenu extends AppCompatActivity {
 
     private void removeAllTasks() {
         allTasksRecyclerView.removeAllViews();
-        db.delete(TodoDBHelper.TABLE_NAME, null, null);
+        final SQLiteDatabase database = dbHelper.getWritableDatabase();
+        database.delete(TodoDBHelper.TABLE_NAME, null, null);
+        database.close();
         refreshAdapterDataset();
     }
 
@@ -218,13 +219,12 @@ public class MainMenu extends AppCompatActivity {
         updateCountTodos();
 
 
-        return db.insert(TodoDBHelper.TABLE_NAME, null, cv);
+        final SQLiteDatabase database = dbHelper.getWritableDatabase();
+        long newTask = database.insert(TodoDBHelper.TABLE_NAME, null, cv);
+        database.close();
+        return newTask;
     }
 
-    private Cursor getAllTasks() {
-        // TODO make asynktaskLoader
-        return db.query(TodoDBHelper.TABLE_NAME, null, null, null, null, null,
-                sortByPreference + " COLLATE NOCASE");
-    }
+
 }
 
