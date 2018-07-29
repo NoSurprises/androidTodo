@@ -37,8 +37,9 @@ public class BootReceiver extends BroadcastReceiver {
     private void setupAlarm(Context context, int addDays) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
-        Intent wakeUpIntent = new Intent(context.getApplicationContext(), BootReceiver.class);
-        wakeUpIntent.setAction(ACTION_ALARM_TICK);
+        Intent wakeUpIntent = new Intent(context.getApplicationContext(), BootReceiver.class)
+                .setAction(ACTION_ALARM_TICK);
+
         PendingIntent alarmIntent = PendingIntent.getBroadcast(context, 0, wakeUpIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -50,7 +51,7 @@ public class BootReceiver extends BroadcastReceiver {
         calendar.add(Calendar.DAY_OF_YEAR, addDays);
         Date wakeupTime = calendar.getTime();
 
-        if (wakeupTime.before(new Date(System.currentTimeMillis()))) {
+        if (wakeupTime.before(new Date())) {
             calendar.add(Calendar.DAY_OF_YEAR, 1);
             wakeupTime = calendar.getTime();
         }
