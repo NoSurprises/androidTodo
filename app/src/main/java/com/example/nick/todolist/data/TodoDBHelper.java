@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import static com.example.nick.todolist.MainActivity.TAG;
+import static com.example.nick.todolist.activities.MainActivity.TAG;
 
 /**
  * Created by Nick on 11/20/2017. Database helper creates new databases and upgrades its structure

@@ -1,4 +1,4 @@
-package com.example.nick.todolist;
+package com.example.nick.todolist.activities;
 
 import android.app.ActionBar;
 import android.content.ContentValues;
@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.EditText;
 
+import com.example.nick.todolist.R;
 import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
 

@@ -17,29 +17,27 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.nick.todolist.activities.EditTaskActivity;
 import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.example.nick.todolist.MainActivity.TAG;
+import static com.example.nick.todolist.activities.MainActivity.TAG;
 
 
-class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewholder> {
+public class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewholder> {
     private final Context context;
     private Cursor cursor;
 
-    TodotaskAdapter(Context context, Cursor cursor) {
+    public TodotaskAdapter(Context context, Cursor cursor) {
         this.context = context;
         this.cursor = cursor;
     }
@@ -176,7 +174,7 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
     }
 
 
-    void swapCursor(Cursor cursor) {
+    public void swapCursor(Cursor cursor) {
         if (this.cursor != null) {
             this.cursor.close();
         }
@@ -187,7 +185,7 @@ class TodotaskAdapter extends RecyclerView.Adapter<TodotaskAdapter.TodotaskViewh
     }
 
 
-    void startEditing(long mId) {
+    public void startEditing(long mId) {
         Intent intent = new Intent(context, EditTaskActivity.class);
         intent.putExtra(TodotaskContract.TodoEntry._ID, mId);
 

@@ -17,17 +17,18 @@
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="schedule alarm"/>
             </intent-filter>
         </receiver>
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".EditTaskActivity" android:parentActivityName=".MainActivity">
+        <activity android:name=".activities.EditTaskActivity" android:parentActivityName=".activities.MainActivity">
         </activity>
     </application>
 

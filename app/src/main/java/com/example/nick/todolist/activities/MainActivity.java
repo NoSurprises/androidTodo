@@ -1,6 +1,7 @@
-package com.example.nick.todolist;
+package com.example.nick.todolist.activities;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -10,13 +11,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import com.example.nick.todolist.BootReceiver;
+import com.example.nick.todolist.R;
+import com.example.nick.todolist.TodotaskAdapter;
 import com.example.nick.todolist.data.TodoDBHelper;
 import com.example.nick.todolist.data.TodotaskContract;
+
+import static com.example.nick.todolist.BootReceiver.DEBUG;
+import static com.example.nick.todolist.BootReceiver.SCHEDULE_ALARM;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -36,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menu);
 
+        
         // Creating the recycler view with all tasks
         bindViews();
 
@@ -73,6 +82,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+
+        // reschedule notifications
+        sendBroadcast(new Intent(this, BootReceiver.class).setAction(SCHEDULE_ALARM));
+
         refreshAdapterDataset();
         updateCountTodos();
     }
